@@ -30,7 +30,7 @@ https://www.rust-lang.org/tools/install
 
 Then:
 
-```shell script
+```shell
 $ sudo apt install libxdo-dev
 $ bash -c '
   git clone https://github.com/rogerdahl/remote-mouse
@@ -45,7 +45,7 @@ The program should now be in your `PATH`. Just type `remote-mouse` from anywhere
 
 This program injects mouse events by writing to `/dev/uinput`. On most systems, only root can write to this device by default. To add write permissions to your user account:
 
-```
+```shell
 bash -c '
     sudo groupadd --system uinput-users
     sudo usermod -a -G uinput-users $USER
@@ -54,9 +54,10 @@ KERNEL=="uinput", GROUP="uinput-users", MODE="0660"
 KERNEL=="uhid", GROUP="uinput-users", MODE="0660"
 END
 '
+```
 
 Reboot to activate.
 
 ## Technologies
 
-- `Rust`, `tokio`, `warp`, `enigo`
+- `Rust`, `tokio`, `warp`, `enigo`.
