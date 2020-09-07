@@ -1,0 +1,75 @@
+/* Override any browser supplied element specific stylesheets to prevent
+ * gaps between elements where touch events would not be picked up */
+* {
+    box-sizing: border-box;
+    padding: 0;
+    margin: 0;
+    border: 0;
+}
+
+body {
+    /* Prevent touch events from selecting the titles in the boxes */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Disable default zoom, scroll and refresh gestures */
+    touch-action: none;
+    overflow-y: hidden;
+    overscroll-behavior: contain;
+
+    background-color: #000000;
+    color: #a0a0a0;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: [col] 40vw  [col] 40vw [col] 10vw  [col] 10vw;
+    grid-template-rows: [row] 10vh [row] 80vh [row] 10vh;
+
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+}
+
+.box {
+    margin: 0.5rem;
+    border-radius: 1rem;
+    padding: .5rem;
+    border-width: thick;
+    border-color: #808080;
+    border-style: solid;
+    background-color: #191919;
+}
+
+#left-hold, #right-hold {
+    font-size: 1vw;
+}
+
+.hold-down {
+    background-color: #654b0f;
+}
+
+#touch {
+    grid-column: col / span 3;
+    grid-row: row 2 / span 2;
+}
+
+#scroll {
+    padding: 0;
+    grid-column: col 4;
+    grid-row: row 2;
+}
+
+#scroll-text {
+    padding: 1rem;
+    transform: rotate(90deg);
+}
+
+#full-screen {
+    grid-column: col 4;
+    grid-row: row 3;
+
+}
