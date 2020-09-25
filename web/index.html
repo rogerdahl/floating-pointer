@@ -1,25 +1,45 @@
 <!doctype html>
 <html lang='en'>
 <head>
-  <script src='https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js'></script>
+  <meta content='no-cache, no-store, must-revalidate' http-equiv='Cache-Control'>
+  <meta content='no-cache' http-equiv='Pragma'>
+  <meta content='0' http-equiv='Expires'>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
+
+  <script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
+  <!--  <script type="text/javascript" src="/Scripts/jquery.min.js"></script>-->
+  <!-- JQM default options must be set after jQuery and before jQuery-mobile -->
   <script src='mouse.js'></script>
+  <script src='http://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.js'></script>
   <link rel='stylesheet' type='text/css' href='mouse.css'/>
-  <title>Mouse</title>
+  <title>Remote Mouse</title>
 </head>
 <body>
 <div id='full' class='grid'>
   <!-- row 1 -->
-  <div id='left' class='box'>Left</div>
+  <div id='left' class='box'>
+    <div class='top'>Left</div>
+    <div class='bottom'>Tap to click</div>
+    <div class='bottom'>Hold to toggle</div>
+  </div>
+  <div id='middle' class='box'>Middle</div>
   <div id='right' class='box'>Right</div>
-  <div id='left-hold' class='box left-hold-up'>Left Hold</div>
-  <div id='right-hold' class='box right-hold-up'>Right Hold</div>
-  <!-- row 2-->
-  <div id='touch' class='box'>Move</div>
+  <!-- row 2 -->
+  <div id='touch' class='box'>
+    <div id='status' class='top'>Touch</div>
+    <div class='bottom'>Tap to left-click</div>
+    <div class='bottom'></div>
+  </div>
   <div id='scroll' class='box'>
     <div id='scroll-text'>Scroll</div>
   </div>
-  <!-- row 3-->
+  <!-- row 3 -->
   <div id='full-screen' class='box'>Full</div>
 </div>
+
+<div id='scroll-tip'></div>
+
 </body>
 </html>
+

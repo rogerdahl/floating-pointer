@@ -5,6 +5,7 @@ authors = ["Roger Dahl <git@dahlsys.com>"]
 edition = "2018"
 
 [dependencies]
+itertools = "*"
 async-std = "1.6.3"
 enigo = "0.0.14"
 futures= "*"
@@ -12,3 +13,6 @@ local_ipaddress = "0.1.3"
 public-ip = "0.1.1"
 tokio = { version = "0.2.22", features = ["full"] }
 warp = "0.2.4"
+# https://crates.io/crates/resource
+resource = "~0.4.0"
+

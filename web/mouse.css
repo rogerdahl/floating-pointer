@@ -8,7 +8,7 @@
 }
 
 body {
-    /* Prevent touch events from selecting the titles in the boxes */
+    /* Prevent touch events from selecting the text in the boxes */
     -webkit-touch-callout: none;
     -webkit-user-select: none;
     -khtml-user-select: none;
@@ -26,12 +26,19 @@ body {
 
 .grid {
     display: grid;
-    grid-template-columns: [col] 40vw  [col] 40vw [col] 10vw  [col] 10vw;
-    grid-template-rows: [row] 10vh [row] 80vh [row] 10vh;
+    /* Left Middle Right */
+    /* 40-- 20---- 25-15 */
+    /* Touch---       Scroll */
+    /* 40 20 25       15 */
+    /* Touch---       Full */
+    /* 40 20 25       15 */
+    grid-template-columns: [col] 40vw  [col] 20vw [col] 25vw  [col] 15vw;
+    grid-template-rows: [row] 15vh [row] 75vh [row] 10vh;
 
     width: 100vw;
     height: 100vh;
     padding: 0;
+    border: none;: focus: none;:: focus: none;
 }
 
 .box {
@@ -44,32 +51,72 @@ body {
     background-color: #191919;
 }
 
-#left-hold, #right-hold {
-    font-size: 1vw;
-}
-
-.hold-down {
-    background-color: #654b0f;
-}
-
-#touch {
-    grid-column: col / span 3;
-    grid-row: row 2 / span 2;
-}
-
-#scroll {
-    padding: 0;
-    grid-column: col 4;
-    grid-row: row 2;
-}
-
 #scroll-text {
     padding: 1rem;
     transform: rotate(90deg);
+    text-align: end;
+}
+
+
+#left {
+    display: flex;
+    flex-direction: column;
+}
+
+#right {
+    grid-column: span 2
+}
+
+
+#touch {
+    display: flex;
+    flex-direction: column;
+    flex-basis: fit-content;
+    grid-column: span 3;
+    grid-row: span 3;
+}
+
+#scroll {
 }
 
 #full-screen {
-    grid-column: col 4;
-    grid-row: row 3;
-
 }
+
+.top {
+    margin-bottom: auto;
+}
+
+.bottom {
+    border: 0;
+    font-size: smaller;
+    filter: brightness(75%);
+}
+
+.button-down {
+    background-color: #9A6623;
+}
+
+.button-touch {
+    filter: brightness(50%);
+}
+
+
+#scroll-tip {
+    display: none;
+    position: absolute;
+    background-color: #303030;
+    white-space: nowrap;
+
+    padding: 1rem 5rem 1rem 1rem;
+    margin: 1rem 5rem 1rem 1rem;
+
+    border-radius: 1rem;
+    border-width: thin;
+    border-color: #808080;
+    border-style: solid;
+}
+
+#scroll-tip.moving {
+    display: inline;
+}
+

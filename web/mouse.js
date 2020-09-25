@@ -1,180 +1,255 @@
-// See the README.md for how to adjust these values.
+// See the README.md for how to adjust these constants.
+const TAP_HOLD_THRESHOLD_MSEC = 300;
+
 const TOUCH_STEP_MULTIPLIER = 4.0;
+const TOUCH_LEFT_CLICK = true;
+
 const SCROLL_STEP_HZ = 0.03;
-const SCROLL_INTERVAL_SEC = 0.01;
-const SCROLL_LEFT_CLICK = false;
+const SCROLL_INTERVAL_MSEC = 10;
+const DISPLAY_FREQUENCY = true;
 
-// true: Write verbose status messages
-const DEBUG = false;
+// true: Write debug messages to console.
+const DEBUG = true;
 
-let TOUCH_LAST_X = 0;
-let TOUCH_LAST_Y = 0;
-
-let SCROLL_ELAPSED_SEC = 0.0;
-let SCROLL_DIR = 0.0;
-let SCROLL_INTERVAL_HANDLE = 0.0;
-let SCROLL_SPEED_HZ = 0.0;
-let SCROLL_START_Y = 0.0;
-
-let BUTTON_LEFT_IS_DOWN = false;
-let BUTTON_RIGHT_IS_DOWN = false;
-
-let SOCKET;
-let STATUS_VEC = []
-// Number of status lines to display
-const STATUS_LINE_COUNT = DEBUG ? 20 : 1;
+// Globals
+let button_dict;
+let touch_pos;
+let socket;
 
 
 $(function () {
-  openSocket();
+  create_socket();
 
-  $('#left').on('click', function () {
-    sendLeftClick();
-  });
-  $('#left-hold').on('click', function () {
-    updateHold(false, !BUTTON_LEFT_IS_DOWN);
-  });
-  $('#right').on('click', function () {
-    sendRightClick();
-  });
-  $('#right-hold').on('click', function () {
-    updateHold(true, !BUTTON_RIGHT_IS_DOWN);
-  });
-  $('#touch').on('click', function () {
-    sendLeftClick();
-  }).on('touchstart', function (event) {
-    TOUCH_LAST_X = event.touches[0].clientX;
-    TOUCH_LAST_Y = event.touches[0].clientY;
-  }).on('touchend', function (event) {
-  }).on('touchmove', function (event) {
-    let x = event.touches[0].clientX;
-    let y = event.touches[0].clientY;
-    let dx = x - TOUCH_LAST_X;
-    let dy = y - TOUCH_LAST_Y;
-    TOUCH_LAST_X = x;
-    TOUCH_LAST_Y = y;
-    send(`touch ${Math.round(dx * TOUCH_STEP_MULTIPLIER)} ${Math.round(dy * TOUCH_STEP_MULTIPLIER)}`);
-  });
-  $('#scroll').on('click', function () {
-    if (SCROLL_LEFT_CLICK) {
-      sendLeftClick();
-    }
-  }).on('touchstart', function (event) {
-    SCROLL_START_Y = event.touches[0].clientY;
-    SCROLL_SPEED_HZ = 0.0001;
-    SCROLL_ELAPSED_SEC = 0.0;
-    SCROLL_DIR = 0;
-    dbg(`Scroll start`);
-    SCROLL_INTERVAL_HANDLE = setInterval(scroller, SCROLL_INTERVAL_SEC * 1000);
-  }).on('touchend', function () {
-    clearInterval(SCROLL_INTERVAL_HANDLE);
-    dbg(`Scroll end`);
-  }).on('touchmove', function (event) {
-    let y = event.touches[0].clientY;
-    let dy = SCROLL_START_Y - y;
-    SCROLL_DIR = -Math.sign(dy);
-    SCROLL_SPEED_HZ = Math.abs(SCROLL_STEP_HZ * dy);
-    dbg(`Scroll Hz=${SCROLL_SPEED_HZ} dy=${dy}`);
-  });
-  $('#full-screen').on('click', function () {
+  button_dict = {};
+  ['left', 'middle', 'right'].forEach(name =>
+      button_dict[name] = {
+        name: name,
+        hold: false,
+        toggle: false,
+        hold_timer: undefined
+      });
+
+  $('#left,#middle,#right')
+      .on('mousedown touchstart', (event) => {
+        handle_button_start(event.target.id);
+        event.preventDefault();
+      })
+      .on('mouseup mouseout touchend', (event) => {
+        handle_button_end(event.target.id);
+        event.preventDefault();
+      });
+
+  $('#touch')
+      .on('click', () => {
+        handle_touch_click();
+      })
+      .on('mouseenter touchstart', (event) => {
+        handle_touch_start(event);
+      })
+      .on('mousemove touchmove', (event) => {
+        handle_touch_move(event);
+      });
+
+  $('#scroll')
+      .on('mousedown touchstart', (event) => {
+        handle_scroll_start(event);
+      })
+      .on('mouseup mouseout touchend', (event) => {
+        handle_scroll_end();
+      })
+      .on('mousemove touchmove', (event) => {
+        handle_scroll_move(event);
+      });
+
+  $('#full-screen').on('click', () => {
     let viewer = $("#full")[0];
+    // noinspection JSUnresolvedVariable
     let rFS = viewer.webkitRequestFullscreen || viewer.requestFullscreen;
     rFS.call(viewer).then();
-  })
+  });
 });
 
-function openSocket() {
-  let w = new WebSocket(`ws://${location.host}/ws`);
-  w.onopen = function () {
-    status('Connected');
+
+// Buttons
+
+function handle_button_start(name) {
+  let d = button_dict[name];
+  d.hold = true;
+  d.hold_timer = setTimeout(handle_button_hold, TAP_HOLD_THRESHOLD_MSEC, d);
+  sync_button_classes(d);
+}
+
+function handle_button_end(name) {
+  let d = button_dict[name];
+  // There's no race here because functions can't be interrupted by events.
+  clearTimeout(d.hold_timer);
+  if (!d.hold) {
+    // Hold has been detected and handled, so there's nothing more to do for touch end.
+    return;
+  }
+  handle_button_click(d);
+}
+
+function handle_button_click(d) {
+  // Handle short hold as a click. Click always causes any toggled down button to be
+  // released first.
+  if (d.toggle) {
+    send(d.name, 'up');
+    d.toggle = false;
+  }
+  send(d.name, 'click');
+  d.hold = false;
+  sync_button_classes(d);
+}
+
+function handle_button_hold(d) {
+  d.toggle = !d.toggle;
+  send(d.name, d.toggle ? 'down' : 'up');
+  d.hold = false;
+  sync_button_classes(d);
+}
+
+function sync_button_classes(d) {
+  // Why doesn't this work?
+  // (d.hold ? e.addClass : e.removeClass)('button-touch');
+  if (d.hold) {
+    $(`#${d.name}`).addClass('button-touch')
+  } else {
+    $(`#${d.name}`).removeClass('button-touch');
+  }
+  if (d.toggle) {
+    $(`#${d.name}`).addClass('button-down')
+  } else {
+    $(`#${d.name}`).removeClass('button-down')
+  }
+}
+
+// Touch, move
+
+function handle_touch_click() {
+  if (TOUCH_LEFT_CLICK) {
+    handle_button_click(button_dict['left']);
+  }
+}
+
+function handle_touch_start(event) {
+  touch_pos = get_xy(event);
+}
+
+function handle_touch_move(event) {
+  let cur_pos = get_xy(event);
+  let dx = cur_pos.x - touch_pos.x;
+  let dy = cur_pos.y - touch_pos.y;
+  touch_pos = cur_pos;
+  send(
+      'touch',
+      Math.round(dx * TOUCH_STEP_MULTIPLIER),
+      Math.round(dy * TOUCH_STEP_MULTIPLIER)
+  );
+}
+
+// Scroll
+//
+// See the README.md for info on the type of scrolling implemented here.
+
+function handle_scroll_start(event) {
+  scroll.start_y = get_y(event);
+  scroll.elapsed_sec = 0.0;
+  scroll.interval_handle = setInterval(
+      handle_scroll_interval, SCROLL_INTERVAL_MSEC
+  );
+  $('#scroll-tip').addClass('moving');
+  handle_scroll_move(event);
+}
+
+function handle_scroll_move(event) {
+  let y = get_y(event);
+  let dy = scroll.start_y - y;
+  scroll.direction = -Math.sign(dy);
+  scroll.speed_hz = Math.abs(SCROLL_STEP_HZ * dy);
+  if (DISPLAY_FREQUENCY) {
+    display_frequency(y, dy);
+  }
+}
+
+function display_frequency(y, dy) {
+  const scroll_left = $('#scroll').offset().left;
+  let tip_el = $('#scroll-tip');
+  tip_el
+      .text(
+          `${dy > 0 ? '\u25b2' : '\u25bc'} ` +
+          `${scroll.speed_hz.toFixed(2)} Hz`
+      )
+      .css('top', `${y - tip_el.outerHeight()}px`)
+      .css('left', `${scroll_left - tip_el.outerWidth()}px`);
+}
+
+function handle_scroll_end() {
+  $('#scroll-tip').removeClass('moving');
+  clearInterval(scroll.interval_handle);
+}
+
+function handle_scroll_interval() {
+  scroll.elapsed_sec += SCROLL_INTERVAL_MSEC / 1000;
+  if (scroll.elapsed_sec >= (1.0 / scroll.speed_hz)) {
+    send('scroll', scroll.direction);
+    scroll.elapsed_sec = 0.0;
+  }
+}
+
+
+// WebSocket
+
+function create_socket() {
+  socket = new WebSocket(`ws://${location.host}/ws`);
+  socket.onopen = () => {
+    status(`Connected to ${location.host}`);
   };
-  w.onmessage = function (event) {
+  socket.onmessage = (event) => {
     status(`Message from server: ${event.data}`);
     return false;
   }
-  w.onclose = function () {
-    status('Disconnected');
-    openSocket();
+  socket.onclose = () => {
+    status('Disconnected. Trying to connect...');
+    setTimeout(create_socket, 1000);
   }
-  w.onerror = function (event) {
+  socket.onerror = (event) => {
     status(`WebSocket error: ${event.message}`);
   }
-  SOCKET = w;
 }
 
-function status(statusStr) {
-  if (STATUS_VEC.length > STATUS_LINE_COUNT) {
-    STATUS_VEC.shift();
-  }
-  STATUS_VEC.push(statusStr);
-  $('#touch').html(STATUS_VEC.join('<br/>'));
-}
-
-function dbg(debugStr) {
-  if (DEBUG) {
-    status(debugStr);
-  }
-}
-
-// Issue single step scroll commands at the rate currently set by how far the user has "dragged" in
-// the scroll area.
-//
-// We don't want user adjustments to implicitly trigger new scroll commands. E.g., if the user
-// adjusts the scroll interval upwards, we just want to adjust the time to wait until triggering the
-// new scroll.
-//
-// This is a bit simplistic in that we just run this method at a fixed and high rate, which is the
-// time resolution of possible scroll rates. At each interval we check if the time since last single
-// step scroll command was issued is equal or longer than the currently selected ratio, and trigger
-// a new one if so.
-function scroller() {
-  SCROLL_ELAPSED_SEC += SCROLL_INTERVAL_SEC;
-  if (SCROLL_ELAPSED_SEC >= (1.0 / SCROLL_SPEED_HZ)) {
-    send(`scroll ${SCROLL_DIR}`);
-    SCROLL_ELAPSED_SEC = 0.0;
-  }
-}
-
-function cancelHold() {
-  updateHold(false, false);
-  updateHold(true, false);
-}
-
-function updateHold(isRight, setDown) {
-  let lrStr = isRight ? 'right' : 'left';
-  let isCurDown = isRight ? BUTTON_RIGHT_IS_DOWN : BUTTON_LEFT_IS_DOWN;
-  if (isCurDown !== setDown) {
-    if (isRight) {
-      BUTTON_RIGHT_IS_DOWN = setDown;
-    } else {
-      BUTTON_LEFT_IS_DOWN = setDown;
-    }
-    send(setDown ? `${lrStr}-down` : `${lrStr}-up`);
-  }
-  let n = `#${lrStr}-hold`
-  let el = $(n);
-  if (setDown) {
-    el.addClass('hold-down');
+function send(...cmd_list) {
+  let cmd_str = cmd_list.join(' ');
+  dbg(`Sending: ${cmd_str}`);
+  if (socket.readyState === 1) {
+    socket.send(cmd_str);
   } else {
-    el.removeClass('hold-down');
+    dbg('Send failed. Socket not ready.')
   }
 }
 
+// Util
 
-function sendLeftClick() {
-  cancelHold();
-  send('left');
+function get_y(event) {
+  return get_xy(event).y;
 }
 
-function sendRightClick() {
-  cancelHold();
-  send('right');
+function get_xy(event) {
+  let e;
+  if (event.type.startsWith('touch')) {
+    e = event.touches[0];
+  } else {
+    e = event;
+  }
+  return {x: e.clientX, y: e.clientY};
 }
 
-function send(cmdStr) {
-  dbg(`Sending: ${cmdStr}`);
-  SOCKET.send(cmdStr);
-  // preventDefault isn't necessary on my browsers but keeping it in as a reminder
-  // for something to try if there's any weird behavior on other browsers.
-  // $(this).preventDefault();
+function status(status_str) {
+  $('#status').text(status_str);
+}
+
+function dbg(debug_str) {
+  if (DEBUG) {
+    console.log(debug_str);
+  }
 }
