@@ -2,6 +2,8 @@
 
 Control the mouse pointer on a Linux desktop using the touch screen on any phone or tablet.
 
+This runs directly in the browser, so there's no app to install on the phone or tablet.
+
 ## Usage
 
 1. Run `remote-mouse` on your Linux desktop machine
