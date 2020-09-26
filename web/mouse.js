@@ -31,11 +31,11 @@ $(function () {
 
   $('#left,#middle,#right')
       .on('mousedown touchstart', (event) => {
-        handle_button_start(event.target.id);
+        handle_button_start(event.currentTarget.id);
         event.preventDefault();
       })
-      .on('mouseup mouseout touchend', (event) => {
-        handle_button_end(event.target.id);
+      .on('mouseup touchend mouseout', (event) => {
+        handle_button_end(event.currentTarget.id);
         event.preventDefault();
       });
 
@@ -54,7 +54,7 @@ $(function () {
       .on('mousedown touchstart', (event) => {
         handle_scroll_start(event);
       })
-      .on('mouseup mouseout touchend', (event) => {
+      .on('mouseup mouseout touchend', () => {
         handle_scroll_end();
       })
       .on('mousemove touchmove', (event) => {
@@ -91,7 +91,7 @@ function handle_button_end(name) {
 }
 
 function handle_button_click(d) {
-  // Handle short hold as a click. Click always causes any toggled down button to be
+  // Handle short hold as a click. Click always causes toggled down button to be
   // released first.
   if (d.toggle) {
     send(d.name, 'up');
