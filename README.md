@@ -1,5 +1,7 @@
 # ACME Remote Mouse
 
+<img align="right" width="40%" src="./assets/screenshot.png">
+
 Control the mouse pointer on a Linux desktop using the touch screen on any phone or tablet.
 
 This runs directly in the browser, so there's no app to install on the phone or tablet.
@@ -12,30 +14,49 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
 ### Buttons
 
-- Click the left-, middle- and right mouse buttons by tapping in the `Left`, `Middle` and `Right` button areas.
+- Click the left-, middle- and right mouse buttons by tapping in the `Left`, `Middle` and `Right` areas.
 
-- Keep a mouse button pressed down by touching the button area until it lights up. Release the button in the same way. Tap a pressed button to first release it, then click it.
+- The left mouse button can also be clicked by tapping in the `Touch` area.
 
-- If a button is often accidentally toggled instead of clicked, increase the toggle threshold as described in the configuration section.
+- Keep a mouse button pressed down by touching the button area until it lights up. Release in the same way.
 
-- Double tap a button to double-click it.
+- Tap a pressed down button to first release it, then click it.
 
+- Double-tap a button to double-click it.
+
+- If a button often accidentally becomes pressed down, [increase the time required for a touch to be detected as a button press instead of a click](#configuration).
+
+### Pointer
+
+- To move the mouse pointer, swipe in the desired direction in the `Touch` area.
+
+- Tapping anywhere in the `Touch` area performs a left button click, so you can click after moving the pointer without moving over to the `Left` button area.
+
+- [The sensitivity is configurable](#configuration).
 
 ### Scrolling 
 
-- The `Scroll` area works like the scroll wheel on a mouse. It works differently from the way scrolling works on most touch pads, which requires repeatedly swiping or dragging in order to keep scrolling. Instead, the `Scroll` area works much the same as autoscroll in web browsers. Scrolling remains active as long as the `Scroll` area is touched. The initial touch point becomes the reference point at which no scrolling occurs. Moving the touch up or down from there selects scroll direction and adjusts the scroll speed.
+- To scroll, position the mouse pointer on what you want to scroll, then touch the `Scroll` area and drag up or down. 
 
-### Movement
+  Notice that movement is only required when you want to change the speed or direction. This is different from most mice, which require you to keep scrolling the mouse wheel, and most touch pads, which require you to repeatedly swipe, in order to keep scrolling.
 
-- Move the mouse pointer by swiping in the desired direction in the `Touch` area. See the configuration section if the sensitivity (ratio of touch movement to mouse movement) is too low or high.
+  The sensitivity of the `Scroll` area is [configurable](#configuration) independently from the `Touch` area.
 
-- The `Touch` area also acts as a large duplicate of the `Left` mouse button area, allowing left mouse button access without having to move when already using the `Touch` area. This function can be disabled if it causes accidental left mouse button clicks. 
+- To keep scrolling without having to keep the touch active, release the touch while the scroll indicator is highlighted. Then stop the scroll with a tap or by starting a new action.
 
+  The scroll also stops if you close the web app or if the connection to the desktop machine is lost.
+  
+  This function is mainly useful when slowly scrolling down in long web pages or documents, so it is enabled only for slow scroll speeds.
+  
+  [The range is configurable](#configuration) and the function can be [disabled altogether](#configuration) (but try it out for a while first!).
+  
 ### Tips
 
 - Touches in the `Touch` and `Scroll` areas only have to start in the areas. They still register if the touch moves into another area.
 
-- It's almost always possible to select text using clicks instead of drag operations. Drag operations are cumbersome on a tablet (you have to use the Hold function). Instead, click at the start of the text to select, then hold Shift and click at the end. It usually works even if there's no visible cursor. 
+- Using a drag operation to select text is cumbersome without a real mouse. Instead, try to click at the start of the text to select, then hold Shift and click at the end. This often works in web browsers and other programs even if there is no visible caret. It works because there's often an invisible caret.
+
+  In some windows, such as error dialog boxes, you can also try to copy the text without selecting it first, by just clicking in the window and pressing Ctrl+C. 
 
 - Enter full screen mode by tapping the `Full` button. This issues a request for full screen to the browser. The request may be ignored, in which case the button will not cause any change. If full screen mode is activated, a swipe from the top or bottom of the screen will normally exit back to regular mode.
 
@@ -103,6 +124,7 @@ Reboot to activate.
 
 ### Scrolling
 
-The most basic implementation of the type of scrolling implemented in the `Scroll` area would be to just read the frequency selected by the user, wait for the period that gives that frequency, trigger a single up or down scroll event, then repeat. But the control would be likely to feel laggy, especially at low frequencies, because adjustments done during the current cycle are only applied to the next cycle. Instead, we continuously track the user's frequency selection, and apply it during the current cycle. So, if the user is increasing the frequency, the current cycle ends earlier than it looked like it would when the cycle started. If the user is decreasing the frequency, the scroll event is delayed, occurring later than it would have if the user had not adjusted the frequency.
+The scroller generates a series of up or down scroll events at a frequency selected by the user. The events correspond to the notches that one usually feels when turning a real scroll wheel.
 
-While the basic implementation can be be done by setting up a interval timer and adjusting it at the start of each cycle, an implementation that continuously adjusts to the user's frequency selection has to read the setting and update the timer every time it changes (ideally), or so often that it appears to be instant. This implementation uses the second approach, checking the settings every 20ms (by default) while scrolling is active.
+Checking which frequency to scroll at only once per event can be done with a simple loop that reads the frequency, waits for the amount of time required for that frequency, then sends the events and repeats. But users often scroll at only one or two events per second, and checking the user's selection so rarely would probably cause the response to feel sluggish. So this implementation uses a different approach, where the user's selection is checked at a constant rate (60 Hz by default). At each check, the time interval required for meeting the currently selected frequency is compared with the actual time since the last event was generated, and a new event is generated if the actual time is longer.
+

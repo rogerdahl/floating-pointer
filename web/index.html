@@ -6,39 +6,47 @@
   <meta content='0' http-equiv='Expires'>
   <meta charset='UTF-8'>
   <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
-
-  <script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
-  <!--  <script type="text/javascript" src="/Scripts/jquery.min.js"></script>-->
-  <!-- JQM default options must be set after jQuery and before jQuery-mobile -->
-  <script src='mouse.js'></script>
-  <script src='http://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.js'></script>
   <link rel='stylesheet' type='text/css' href='mouse.css'/>
   <title>Remote Mouse</title>
 </head>
 <body>
 <div id='full' class='grid'>
   <!-- row 1 -->
-  <div id='left' class='box'>
-    <div class='top'>Left</div>
-    <div class='bottom'>Tap to click</div>
-    <div class='bottom'>Hold to toggle</div>
+  <div id='left' class='rounded-box'>
+    <div class='func'>Left</div>
+    <div class='help'>Tap to click</div>
+    <div class='help'>Hold to toggle</div>
   </div>
-  <div id='middle' class='box'>Middle</div>
-  <div id='right' class='box'>Right</div>
+  <div id='middle' class='rounded-box'>
+    <div class='func'>Middle</div>
+  </div>
+  <div id='right' class='rounded-box'>
+    <div class='func'>Right</div>
+  </div>
   <!-- row 2 -->
-  <div id='touch' class='box'>
-    <div id='status' class='top'>Touch</div>
-    <div class='bottom'>Tap to left-click</div>
-    <div class='bottom'></div>
+  <div id='touch' class='rounded-box'>
+    <div id='status' class='func'>Touch</div>
+    <!--    <div id='dbg-container'>-->
+    <div id='dbg' class='log'></div>
+    <div class='help'>Tap to left-click</div>
+    <!--    </div>-->
   </div>
-  <div id='scroll' class='box'>
-    <div id='scroll-text'>Scroll</div>
+  <div id='scroll' class='rounded-box'>
+    <div id='scroll-title' class='func'>Scroll</div>
   </div>
   <!-- row 3 -->
-  <div id='full-screen' class='box'>Full</div>
+  <div id='full-screen' class='rounded-box'>
+    <div class='func'>Full</div>
+  </div>
 </div>
 
 <div id='scroll-tip'></div>
+
+<script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
+<!--  <script type="text/javascript" src="/Scripts/jquery.min.js"></script>-->
+<!-- JQM default options must be set after jQuery and before jQuery-mobile -->
+<script src='mouse.js'></script>
+<script src='http://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.js'></script>
 
 </body>
 </html>

@@ -27,6 +27,7 @@ body {
 }
 
 .grid {
+    /* Top level grid containing the main UI elements */
     display: grid;
     /* Left Middle Right */
     /* 40-- 20---- 25-15 */
@@ -43,7 +44,12 @@ body {
     border: none;: focus: none;:: focus: none;
 }
 
-.box {
+.rounded-box {
+    /* Top level UI elements */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    /*flex-basis: fit-content;*/
     margin: 0.5rem;
     border-radius: 1rem;
     padding: .5rem;
@@ -51,57 +57,51 @@ body {
     border-color: #808080;
     border-style: solid;
     background-color: #191919;
+    /* Prevent children from expanding the box */
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
 }
 
-#scroll-text {
+.func {
+    margin-bottom: auto;
+}
+
+.log {
+    padding-bottom: 2rem;
+    font-size: smaller;
+    filter: brightness(75%)
+}
+
+.help {
+    border: 0;
+    font-size: smaller;
+    filter: brightness(75%)
+}
+
+#scroll-title {
     padding: 1rem;
     transform: rotate(90deg);
-    text-align: end;
-}
-
-
-#left {
-    display: flex;
-    flex-direction: column;
+    transform-origin: center;
 }
 
 #right {
     grid-column: span 2
 }
 
-
 #touch {
-    display: flex;
-    flex-direction: column;
-    flex-basis: fit-content;
     grid-column: span 3;
     grid-row: span 3;
 }
 
-#scroll {
-}
-
-#full-screen {
-}
-
-.top {
-    margin-bottom: auto;
-}
-
-.bottom {
-    border: 0;
-    font-size: smaller;
-    filter: brightness(75%);
-}
-
-.button-down {
-    background-color: #9A6623;
+.highlight {
+    background-color: #9A6623 !important;
+    color: #202020 !important;
 }
 
 .button-touch {
     filter: brightness(50%);
 }
-
 
 #scroll-tip {
     display: none;
@@ -113,9 +113,11 @@ body {
     margin: 1rem 5rem 1rem 1rem;
 
     border-radius: 1rem;
-    border-width: thin;
+    border-width: .1rem;
     border-color: #808080;
     border-style: solid;
+
+    box-shadow: 0 0 .25rem .25rem black;
 }
 
 #scroll-tip.moving {
