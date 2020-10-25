@@ -19,12 +19,11 @@ const DEBUG = true;
 const UI_DEBUG = true;
 
 // Globals
-let g_button_dict;
 let g_touch_pos;
 let g_socket;
 let g_touch_start_ts;
 
-g_button_dict = {};
+let g_button_dict = {};
 ['left', 'middle', 'right'].forEach(name =>
     g_button_dict[name] = {
       name: name,
@@ -36,41 +35,57 @@ g_button_dict = {};
 
 
 $(function () {
-  install_global_error_handler();
+  register_global_error_handler();
+  register_on_any();
   create_socket();
+
+  // Show touch events received by an element.
+  $('#left,#middle,#right,#scroll,#touch').onAny(function (e) {
+    if (!e.type.includes('touch')) {
+      return;
+    }
+    // Suppress frequent events that may push out more useful information.
+    if (e.type.includes('move') || e.type.includes('rawupdate')) {
+      return;
+    }
+    dbg(e.type);
+  });
 
   $('#left,#middle,#right')
       .on('mousedown touchstart', (ev) => {
         stop_auto_scroll(ev);
         handle_button_touch_start(ev.currentTarget.id);
+        // TODO: Move to the virtualized mouse events in jQuery Mobile. That way, we'll need
+        // just one event type in 'on', and can skip 'stopImmediatePropagation' (which causes
+        // just one of the handlers in 'on' to be called.)
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        // Returning false, calls event.stopPropagation() and event.preventDefault().
+        return false;
       })
       .on('mouseup touchend mouseout', (ev) => {
         handle_button_touch_end(ev.currentTarget.id);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       });
 
   $('#touch')
-      // The sequence of touch and mouse events that are triggered did not seem to work well for
-      // this particular application, so we don't capture click events. Instead, we time the
-      // duration of touch events and trigger clicks directly.
+      // Fore more control, we don't capture click events. Instead, we monitor the length of touch
+      // events and infer clicks.
       .on('mouseenter touchstart', (ev) => {
         stop_auto_scroll(ev);
         handle_touch_start(ev);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       })
       .on('mouseup mouseout touchend', (ev) => {
         handle_touch_end();
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       })
       .on('mousemove touchmove', (ev) => {
         handle_touch_move(ev);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       });
 
   $('#scroll')
@@ -79,17 +94,36 @@ $(function () {
         stop_auto_scroll(ev);
         handle_scroll_touch_start(ev);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       })
       .on('mouseup mouseout touchend', (ev) => {
         handle_scroll_touch_end(ev);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
       })
       .on('mousemove touchmove', (ev) => {
         handle_scroll_move(ev);
         ev.stopImmediatePropagation();
-        ev.preventDefault();
+        return false;
+
+        //   let pos = get_xy(ev);
+        //   let elementMouseIsOver = document.elementFromPoint(pos.x, pos.y);
+        //   $('#right').text(elementMouseIsOver.id);
+        //   if (elementMouseIsOver.id !== 'scroll') {
+        //     $(this).trigger('touchend');
+        //   }
+        //   // if($("#scroll:hover").length === 0) {
+        //   //   ++TEST_COUNTER;
+        //   //   $('#right').text(TEST_COUNTER.toString());
+        //   // }
+        //   //     $(".hint").text("Mouse is Over the DIV Element.");
+        //   // } else{
+        //   //     $(".hint").text("Mouse is Outside the DIV Element.");
+        //   // }
+        //
+        //   handle_scroll_move(ev);
+        //   ev.stopImmediatePropagation();
+        //   return false;
       })
   ;
 
@@ -104,7 +138,6 @@ $(function () {
 // Buttons
 
 function handle_button_touch_start(name) {
-  dbg('button_touch_start');
   let d = g_button_dict[name];
   d.hold = true;
   d.hold_timer = setTimeout(handle_button_hold, TAP_HOLD_THRESHOLD_MSEC, d);
@@ -112,7 +145,6 @@ function handle_button_touch_start(name) {
 }
 
 function handle_button_touch_end(name) {
-  dbg('button_touch_end');
   let d = g_button_dict[name];
   // There's no race here as functions can't be interrupted by events.
   clearTimeout(d.hold_timer);
@@ -126,7 +158,6 @@ function handle_button_touch_end(name) {
 function handle_button_click(d) {
   // Handle short hold as a click. Click always causes toggled down button to be
   // released first.
-  dbg('button_click');
   if (d.toggle) {
     send(d.name, 'up');
     d.toggle = false;
@@ -137,7 +168,6 @@ function handle_button_click(d) {
 }
 
 function handle_button_hold(d) {
-  dbg('button_hold');
   d.toggle = !d.toggle;
   send(d.name, d.toggle ? 'down' : 'up');
   d.hold = false;
@@ -145,30 +175,20 @@ function handle_button_hold(d) {
 }
 
 function sync_button_classes(d) {
-  // Why doesn't this work?
-  // (d.hold ? e.addClass : e.removeClass)('button-touch');
-  if (d.hold) {
-    $(`#${d.name}`).addClass('button-touch')
-  } else {
-    $(`#${d.name}`).removeClass('button-touch');
-  }
-  if (d.toggle) {
-    $(`#${d.name}`).addClass('highlight')
-  } else {
-    $(`#${d.name}`).removeClass('highlight')
-  }
+  $(`#${d.name}`)
+      .toggleClass('button-touch', d.hold)
+      .toggleClass('highlight', d.toggle)
+  ;
 }
 
 // Touch, move
 
 function handle_touch_start(ev) {
-  dbg('touch_start');
   g_touch_pos = get_xy(ev);
   g_touch_start_ts = Date.now();
 }
 
 function handle_touch_move(ev) {
-  // dbg('touch_move');
   let cur_pos = get_xy(ev);
   let dx = cur_pos.x - g_touch_pos.x;
   let dy = cur_pos.y - g_touch_pos.y;
@@ -183,12 +203,11 @@ function handle_touch_move(ev) {
 }
 
 function handle_touch_end(_ev) {
-  dbg('touch_end');
   if (Date.now() - g_touch_start_ts < TOUCH_CLICK_THRESHOLD_MSEC) {
     if (TOUCH_LEFT_CLICK) {
       handle_button_click(g_button_dict['left']);
     } else {
-      dbg('ignored click (settings)')
+      dbg('ignored click (see settings)')
     }
   }
 }
@@ -198,7 +217,6 @@ function handle_touch_end(_ev) {
 // See the README.md for info on the type of scrolling implemented here.
 
 function handle_scroll_touch_start(ev) {
-  dbg('scroll_touch_start');
   console.assert(typeof scroll.interval_handle == 'undefined');
   scroll.start_y = get_y(ev);
   scroll.interval_start_ts = Date.now();
@@ -210,17 +228,16 @@ function handle_scroll_touch_start(ev) {
 }
 
 function handle_scroll_move(ev) {
-  dbg('scroll_move');
   let y = get_y(ev);
   let dy = scroll.start_y - y;
   scroll.direction = -Math.sign(dy);
   scroll.speed_hz = acceleration_curve(dy, SCROLL_SENSITIVITY);
   if (DISPLAY_FREQUENCY) {
-    display_frequency(y, dy);
+    display_frequency(ev, y, dy);
   }
 }
 
-function display_frequency(y, dy) {
+function display_frequency(ev, y, dy) {
   const scroll_left = $('#scroll').offset().left;
   let tip_el = $('#scroll-tip');
   tip_el
@@ -231,35 +248,39 @@ function display_frequency(y, dy) {
       .css('top', `${y - tip_el.outerHeight()}px`)
       .css('left', `${scroll_left - tip_el.outerWidth()}px`);
 
+  tip_el.toggleClass('highlight', is_auto_scroll_available(ev));
+}
 
-  if (SCROLL_AUTO_THRESHOLD_LOW_HZ < scroll.speed_hz && scroll.speed_hz <= SCROLL_AUTO_THRESHOLD_HIGH_HZ) {
-    tip_el.addClass('highlight');
-  } else {
-    tip_el.removeClass('highlight');
-  }
-
+function is_auto_scroll_available(ev) {
+  return (
+      SCROLL_AUTO_THRESHOLD_LOW_HZ < scroll.speed_hz &&
+      SCROLL_AUTO_THRESHOLD_HIGH_HZ >= scroll.speed_hz &&
+      is_currently_touched_element(ev)
+  );
 }
 
 function handle_scroll_touch_end(ev) {
-  dbg('scroll_touch_end');
-  if (SCROLL_AUTO_THRESHOLD_LOW_HZ < scroll.speed_hz && scroll.speed_hz <= SCROLL_AUTO_THRESHOLD_HIGH_HZ) {
-    dbg('-> starting autoscroll');
+  if (is_auto_scroll_available(ev)) {
+    dbg('-> auto-scroll start');
   } else {
-    stop_auto_scroll(ev);
+    stop_scroll();
   }
 }
 
 function stop_auto_scroll(_ev) {
   if (scroll.interval_handle) {
-    dbg('stop_auto_scroll');
-    $('#scroll-tip').removeClass('moving');
-    clearInterval(scroll.interval_handle);
-    scroll.interval_handle = undefined;
+    dbg('-> auto-scroll stop');
+    stop_scroll();
   }
 }
 
+function stop_scroll() {
+  $('#scroll-tip').removeClass('moving');
+  clearInterval(scroll.interval_handle);
+  scroll.interval_handle = undefined;
+}
+
 function handle_scroll_interval(_ev) {
-  // dbg('scroll_interval');
   scroll.elapsed_sec += SCROLL_INTERVAL_MSEC / 1000;
   if ((Date.now() - scroll.interval_start_ts) / 1000 >= (1.0 / scroll.speed_hz)) {
     send('scroll', scroll.direction);
@@ -314,13 +335,27 @@ function get_y(ev) {
 }
 
 function get_xy(ev) {
-  let e;
   if (ev.type.startsWith('touch')) {
-    e = ev.touches[0];
+    const evt = (typeof ev.originalEvent === 'undefined') ? ev : ev.originalEvent;
+    const touch = evt.touches[0] || evt.changedTouches[0];
+    return {x: touch.pageX, y: touch.pageY};
   } else {
-    e = ev;
+    return {x: ev.clientX, y: ev.clientY};
   }
-  return {x: e.clientX, y: e.clientY};
+}
+
+// Return `true` if the element that is currently receiving touch events is also the element under
+// the point being touched.
+//
+// Touch events are bound to the element where the event first started. The element does not receive
+// any events that indicate that the touch has left the event boundaries, like pointerout,
+// pointerup, lostpointercapture and pointerleave. In general, that's beneficial. For instance, it
+// allows the user to adjust a slider without having to stay inside the slider throughout the entire
+// adjustment.
+function is_currently_touched_element(ev) {
+  let pos = get_xy(ev);
+  let touched_el = document.elementFromPoint(pos.x, pos.y);
+  return ev.currentTarget === touched_el;
 }
 
 function status(status_str) {
@@ -333,7 +368,9 @@ let g_last_op_str = '';
 let g_count_int = 0;
 
 
-function dbg(debug_str) {
+function dbg(...debug_str_list) {
+  let debug_str = debug_str_list.join(' ');
+
   if (DEBUG) {
     console.log(debug_str);
   }
@@ -374,7 +411,7 @@ function dbg(debug_str) {
   }
 }
 
-function install_global_error_handler() {
+function register_global_error_handler() {
   window.onerror = function (
       msg,
       url,
@@ -394,5 +431,20 @@ function install_global_error_handler() {
       ].join('\n'));
     }
     return false;
+  };
+}
+
+// Event handler for all events that are received by an element. Used like "on", except
+// that it does not take a list of events.
+function register_on_any() {
+  $.fn.onAny = function (cb) {
+    for (const k in this[0]) { // noinspection JSUnfilteredForInLoop
+      if (!k.search('on')) { // noinspection JSUnfilteredForInLoop
+        this.on(k.slice(2), function (e) {
+          cb.apply(this, [e]);
+        });
+      }
+    }
+    return this;
   };
 }

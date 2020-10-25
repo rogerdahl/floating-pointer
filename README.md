@@ -24,38 +24,46 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
 - Double-tap a button to double-click it.
 
-- If a button often accidentally becomes pressed down, [increase the time required for a touch to be detected as a button press instead of a click](#configuration).
+- If a button often accidentally becomes pressed down, see the configuration section for how to increase the time required for a touch to be detected as a button press instead of a click.
 
 ### Pointer
 
-- To move the mouse pointer, swipe in the desired direction in the `Touch` area.
+- To move the mouse pointer, swipe in the `Touch` area.
 
 - Tapping anywhere in the `Touch` area performs a left button click, so you can click after moving the pointer without moving over to the `Left` button area.
 
-- [The sensitivity is configurable](#configuration).
+- The sensitivity is configurable.
 
-### Scrolling 
+### Scrolling
 
 - To scroll, position the mouse pointer on what you want to scroll, then touch the `Scroll` area and drag up or down. 
 
+  When scrolling is active, an indicator is displayed, showing scroll direction and scroll events per second.
+
   Notice that movement is only required when you want to change the speed or direction. This is different from most mice, which require you to keep scrolling the mouse wheel, and most touch pads, which require you to repeatedly swipe, in order to keep scrolling.
 
-  The sensitivity of the `Scroll` area is [configurable](#configuration) independently from the `Touch` area.
+- The sensitivity of the `Scroll` area can be configured independently from the `Touch` area.
 
-- To keep scrolling without having to keep the touch active, release the touch while the scroll indicator is highlighted. Then stop the scroll with a tap or by starting a new action.
+### Automatic scrolling
 
-  The scroll also stops if you close the web app or if the connection to the desktop machine is lost.
-  
-  This function is mainly useful when slowly scrolling down in long web pages or documents, so it is enabled only for slow scroll speeds.
-  
-  [The range is configurable](#configuration) and the function can be [disabled altogether](#configuration) (but try it out for a while first!).
-  
+This function allows you to keep scrolling without having to keep the touch active. It's mainly useful when slowly scrolling down in long web pages or documents.
+
+- Release the `Scroll` area while the scroll frequency indicator is highlighted to start automatic scrolling.
+
+- Stop scrolling with a tap or by starting a new action.   The scroll also stops if you close the web app or if the connection to the desktop computer is lost.
+
+- To reduce the chance of automatic scrolling getting triggered accidentally, it is enabled only for slow scroll speeds and only while the touch remains inside the `Scroll` area.
+
+- The range of scroll speeds for which automatic scrolling is enabled is configurable and the function can be disabled altogether (but try it out for a while first!).
+
 ### Tips
 
 - Touches in the `Touch` and `Scroll` areas only have to start in the areas. They still register if the touch moves into another area.
 
-- Using a drag operation to select text is cumbersome without a real mouse. Instead, try to click at the start of the text to select, then hold Shift and click at the end. This often works in web browsers and other programs even if there is no visible caret. It works because there's often an invisible caret.
+- Using a drag operation to select text is cumbersome without a real mouse. Fortunately, even if there is no visible caret, there may be an invisible one. So text can be selected as if there is a caret. For instance, by clicking at one end of the selection, then holding shift while clicking at the other end, or by using the arrow keys.
 
+  Web browsers often have an invisible caret. Chrome and Firefox also have a mode where the caret is visible.
+   
   In some windows, such as error dialog boxes, you can also try to copy the text without selecting it first, by just clicking in the window and pressing Ctrl+C. 
 
 - Enter full screen mode by tapping the `Full` button. This issues a request for full screen to the browser. The request may be ignored, in which case the button will not cause any change. If full screen mode is activated, a swipe from the top or bottom of the screen will normally exit back to regular mode.
@@ -84,7 +92,7 @@ Anyone that can connect to the WebSocket that remote-mouse opens on the desktop 
 
 ### Build on Linux
 
-You need Rust for building this. It usually installs with a single command, as described at:
+You need Rust for building this. Rust usually installs with a single command, as described at:
 
 https://www.rust-lang.org/tools/install
 
@@ -105,9 +113,9 @@ This program injects mouse events by writing to `/dev/uinput`. On most systems, 
 
 ```shell
 bash -c '
-    sudo groupadd --system uinput-users
-    sudo usermod -a -G uinput-users $USER
-    sudo cat<<END>>/etc/udev/rules.d/90-uinput.rules
+sudo groupadd --system uinput-users
+sudo usermod -a -G uinput-users $USER
+sudo cat<<END>>/etc/udev/rules.d/90-uinput.rules
 KERNEL=="uinput", GROUP="uinput-users", MODE="0660"
 KERNEL=="uhid", GROUP="uinput-users", MODE="0660"
 END
