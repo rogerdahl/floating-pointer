@@ -23,8 +23,11 @@ export const SCROLL_INTERVAL_MS = 20;
 // Period in ms, between each attempt to reconnect a lost WebSocket connection to the desktop.
 export const WEB_SOCKET_TIMEOUT_MS = 1000;
 
-// Logging
+// Max number of event messages to send over the network to the desktop machine per second.
+export const MOUSE_MOVE_RATE_LIMIT_HZ = 30;
+export const SCROLL_MOVE_RATE_LIMIT_HZ = 30;
 
+// Logging
 export const LogLevel = {
   DEBUG: 10,
   INFO: 20,

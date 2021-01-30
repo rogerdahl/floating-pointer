@@ -80,14 +80,6 @@ export function dump_obj_properties(var_name, obj)
   }
 }
 
-export function limit_event_rate(fn, ev, limit_hz)
-{
-  info('11111111111111111');
-  return (ev) => {
-    return fn(ev);
-  }
-}
-
 // This also captures failed console.assert().
 export function register_global_error_handler()
 {

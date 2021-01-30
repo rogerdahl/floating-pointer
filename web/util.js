@@ -2,9 +2,6 @@
 
 'use strict';
 
-// import * as settings from "./settings.js";
-// import * as ws from "./ws.js";
-
 // Should not import from local modules here.
 
 // Exported
@@ -85,43 +82,20 @@ export function stop(ev)
   return false;
 }
 
-
-// Wrap an event handler and limit the rate at which it gets called.
-//
-// If the last call we received was blocked, we perform the call and immediately block again. The question is if we want
-// to be pessimistic or optimistic. Pessimistic would be to assume that we won't soon get an updated event, while
-// optimistic would be to assume that we will soon get a new event. If we're pessimistic, we might as well run the
-// blocked one, even though that causes us to have to block again and so we miss out on a new event if we instead should
-// have been optimistic.
-
-export function _limit_event_rate(fn, ev, limit_hz)
+// Wrap a method and limit the number of calls that get through to the method.
+export function rate_limiter(fn, limit_hz)
 {
-  let wrapped_fn = fn;
-  let last_event = null
+  let delay_ms = 1000 * (1 / limit_hz)
   let is_blocked = false;
 
-  // The wrapper that is called without rate limiting.
   return function (ev) {
-    last_event = ev;
-
     if (!is_blocked) {
-      run()
+      is_blocked = true;
+      setTimeout(function () {
+        is_blocked = false;
+        fn(ev);
+      }, delay_ms);
     }
-  }
-
-  function run()
-  {
-    if (last_event == null) {
-      return;
-    }
-    wrapped_fn(ev);
-    last_event = null;
-    is_blocked = true;
-
-    setTimeout(() => {
-      is_blocked = false;
-      run();
-    }, Math.round(1 / limit_hz) * 1000);
-  }
+  };
 }
 

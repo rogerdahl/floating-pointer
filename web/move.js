@@ -2,12 +2,12 @@
 
 'use strict';
 
-import * as settings from "./settings.js";
 import * as touch from "./touch.js";
 import * as ws from "./ws.js";
 import * as scroll from "./scroll.js";
-import * as util from "./util.js";
 import * as log from "./log.js";
+import * as util from "./util.js";
+import * as settings from "./settings.js";
 
 // Exported
 
@@ -19,15 +19,22 @@ export function register_event_handlers()
         handle_move_start(ev);
         return util.stop(ev);
       })
-      .on('mousemove touchmove', (ev) => {
+      .on('mousemove touchmove', util.rate_limiter((ev) => {
         // Ignore mousemove (hover) events unless mouse button is down.
         if (!touch.is_active(ev)) {
           return; // true;
         }
         handle_touch_move(ev);
-        // util.limit_event_rate(handle_touch_move(ev), 0.3);
         return util.stop(ev);
-      })
+      }, settings.MOUSE_MOVE_RATE_LIMIT_HZ))
+      // .on('mousemove touchmove', util.limit_event_rate((ev) => {
+      //   // Ignore mousemove (hover) events unless mouse button is down.
+      //   if (!touch.is_active(ev)) {
+      //     return; // true;
+      //   }
+      //   handle_touch_move(ev);
+      //   return util.stop(ev);
+      // }, settings.MOUSE_MOVE_RATE_LIMIT_HZ))
   ;
 }
 
