@@ -4,11 +4,12 @@
 """
 
 import asyncio
-import websockets
 import logging
 import sys
-import math
 import time
+
+import math
+import websockets
 
 log = logging.getLogger(__name__)
 

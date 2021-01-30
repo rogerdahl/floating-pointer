@@ -2,8 +2,8 @@
     /* Override any browser supplied element specific stylesheets to prevent gaps between elements
      * where touch events would not be picked up */
     box-sizing: border-box;
-    padding: 0;
     margin: 0;
+    padding: 0;
     border: 0;
     /* Turn off highlighting of currently selected input that is added by jQuery Mobile */
     outline: none;
@@ -11,19 +11,24 @@
 
 body {
     /* Prevent touch events from selecting the text in the boxes */
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
+    font-size: small;
+    overflow-y: hidden;
     -moz-user-select: none;
     -ms-user-select: none;
+    -webkit-user-select: none;
     user-select: none;
-    /* Disable default zoom, scroll and refresh gestures */
-    touch-action: none;
-    overflow-y: hidden;
-    overscroll-behavior: contain;
-
-    background-color: #000000;
     color: #a0a0a0;
+    background-color: #000000;
+    /*-webkit-fill-available: 1;*/
+
+    /* Disable default zoom, scroll and refresh gestures */
+    -webkit-touch-callout: none;
+    touch-action: none;
+
+    /*white-space: nowrap;*/
+    /*word-break: break-all;*/
+
+    overscroll-behavior: contain;
 }
 
 .grid {
@@ -35,92 +40,145 @@ body {
     /* 40 20 25       15 */
     /* Touch---       Full */
     /* 40 20 25       15 */
-    grid-template-columns: [col] 40vw  [col] 20vw [col] 25vw  [col] 15vw;
-    grid-template-rows: [row] 15vh [row] 75vh [row] 10vh;
-
     width: 100vw;
-    height: 100vh;
+    /*height: 100vh - var(--vh-offset, 0px);*/
     padding: 0;
-    border: none;: focus: none;:: focus: none;
+    border: none;
+    grid-template-columns: [col] 40vw [col] 20vw [col] 25vw [col] 15vw;
+
+    grid-template-rows:
+            [row] calc(var(--vh-offset, 1vh) * 15)
+            [row] calc(var(--vh-offset, 1vh) * 65)
+            [row] calc(var(--vh-offset, 1vh) * 10)
+            [row] calc(var(--vh-offset, 1vh) * 10);
 }
 
 .rounded-box {
     /* Top level UI elements */
     display: flex;
+    overflow: hidden;
     flex-direction: column;
-    justify-content: space-evenly;
     /*flex-basis: fit-content;*/
-    margin: 0.5rem;
-    border-radius: 1rem;
-    padding: .5rem;
-    border-width: thick;
-    border-color: #808080;
-    border-style: solid;
-    background-color: #191919;
-    /* Prevent children from expanding the box */
+    justify-content: space-evenly;
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
+    margin: 0.5rem;
+    padding: .5rem;
+    border-width: thick;
+    border-style: solid;
+    border-color: #808080;
+    border-radius: 1rem;
+    background-color: #191919;
 }
 
 .func {
     margin-bottom: auto;
 }
 
-.log {
+#log {
+    font-size: small;
     padding-bottom: 2rem;
-    font-size: smaller;
     filter: brightness(75%)
 }
 
 .help {
+    font-size: small;
     border: 0;
-    font-size: smaller;
     filter: brightness(75%)
 }
 
+#scroll {
+    display: flex;
+    flex-direction: row;
+    writing-mode: vertical-rl;
+}
+
+.scroll-help {
+    align-self: end;
+    width: max-content;
+    padding: 0 0 1rem 0;
+    white-space: nowrap;
+    filter: brightness(75%);
+}
+
 #scroll-title {
-    padding: 1rem;
-    transform: rotate(90deg);
-    transform-origin: center;
+    /*     align-self: center; */
+    /*     padding: 1rem 0 0 0; */
 }
 
 #right {
     grid-column: span 2
 }
 
-#touch {
+#move {
     grid-column: span 3;
     grid-row: span 3;
 }
 
 .highlight {
-    background-color: #9A6623 !important;
     color: #202020 !important;
+    background-color: #9A6623 !important;
 }
+
+.log-debug {
+    color: #a0a0a0 !important;
+    filter: brightness(50%);
+}
+
+.log-info {
+    color: #00ff00 !important;
+    filter: brightness(50%);
+}
+
+.log-warning {
+    color: #ff7c00 !important;
+}
+
+.log-error {
+    color: #ff0000 !important;
+}
+
+.log-critical {
+    color: #ff0000 !important;
+}
+
+.log-cmd {
+    color: #ffff00 !important;
+    filter: brightness(50%);
+}
+
 
 .button-touch {
     filter: brightness(50%);
 }
 
 #scroll-tip {
-    display: none;
     position: absolute;
-    background-color: #303030;
-    white-space: nowrap;
-
-    padding: 1rem 5rem 1rem 1rem;
+    display: none;
     margin: 1rem 5rem 1rem 1rem;
+    padding: 1rem 5rem 1rem 1rem;
 
-    border-radius: 1rem;
+    white-space: nowrap;
     border-width: .1rem;
-    border-color: #808080;
+
     border-style: solid;
+    border-color: #808080;
+    border-radius: 1rem;
+    background-color: #303030;
 
     box-shadow: 0 0 .25rem .25rem black;
 }
 
-#scroll-tip.moving {
+#scroll-tip.visible {
     display: inline;
 }
 
+
+#overlay {
+    position: absolute;
+    z-index: 1000;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}

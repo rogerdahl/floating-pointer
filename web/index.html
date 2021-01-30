@@ -5,37 +5,61 @@
   <meta content='no-cache' http-equiv='Pragma'>
   <meta content='0' http-equiv='Expires'>
   <meta charset='UTF-8'>
-  <meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'>
-  <link rel='stylesheet' type='text/css' href='mouse.css'/>
+  <meta content='width=device-width, initial-scale=1, shrink-to-fit=no' name='viewport'>
+
+  <!--<script src="https://unpkg.com/vh-check/dist/vh-check.min.js"></script>-->
+  <script src='./lib/vh-check.min.js'></script>
+  <script>
+  (function () {
+    // initialize the test
+    window.test = vhCheck({
+      cssVarName: 'vh-offset',
+      force: false,
+      bind: false,
+      redefineVh: true,
+      updateOnTouch: false,
+      onUpdate: function noop() {},
+    });
+    // window.test;
+
+  }());
+  </script>
+
+  <link href='mouse.css' rel='stylesheet' type='text/css'/>
   <title>Remote Mouse</title>
 </head>
 <body>
-<div id='full' class='grid'>
+<div class='grid' id='full'>
   <!-- row 1 -->
-  <div id='left' class='rounded-box'>
+  <div class='rounded-box' id='left'>
     <div class='func'>Left</div>
     <div class='help'>Tap to click</div>
     <div class='help'>Hold to toggle</div>
   </div>
-  <div id='middle' class='rounded-box'>
+  <div class='rounded-box' id='middle'>
     <div class='func'>Middle</div>
   </div>
-  <div id='right' class='rounded-box'>
+  <div class='rounded-box' id='right'>
     <div class='func'>Right</div>
   </div>
   <!-- row 2 -->
-  <div id='touch' class='rounded-box'>
-    <div id='status' class='func'>Touch</div>
+  <div class='rounded-box' id='move'>
+    <div class='func' id='status'>Touch</div>
     <!--    <div id='dbg-container'>-->
-    <div id='dbg' class='log'></div>
+    <div id='log'></div>
     <div class='help'>Tap to left-click</div>
     <!--    </div>-->
   </div>
-  <div id='scroll' class='rounded-box'>
-    <div id='scroll-title' class='func'>Scroll</div>
+  <div class='rounded-box' id='scroll'>
+    <div class='func' id='scroll-title'>Scroll</div>
+    <div class='help scroll-help'>Release then tap to start auto-scroll</div>
   </div>
   <!-- row 3 -->
-  <div id='full-screen' class='rounded-box'>
+  <div class='rounded-box' id='smooth-scroll-toggle'>
+    <div class='func'>Smooth</div>
+  </div>
+  <!-- row 4 -->
+  <div class='rounded-box' id='full-screen'>
     <div class='func'>Full</div>
   </div>
 </div>
@@ -45,9 +69,14 @@
 <script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
 <!--  <script type="text/javascript" src="/Scripts/jquery.min.js"></script>-->
 <!-- JQM default options must be set after jQuery and before jQuery-mobile -->
-<script src='mouse.js'></script>
 <script src='http://code.jquery.com/mobile/1.5.0-alpha.1/jquery.mobile-1.5.0-alpha.1.min.js'></script>
+
+<script src='./touch.js' type='module'></script>
+<script src='./settings.js' type='module'></script>
+<script src='./util.js' type='module'></script>
+<script src='./scroll.js' type='module'></script>
+<script src='./log.js' type='module'></script>
+<script src='./main.js' type='module'></script>
 
 </body>
 </html>
-

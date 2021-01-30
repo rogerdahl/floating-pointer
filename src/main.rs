@@ -1,16 +1,16 @@
 use std::str;
-// use warp::Filter;
-
-use enigo::{Enigo, /* Key, KeyboardControllable,*/ MouseControllable, MouseButton};
-
-// use async::task;
-use futures::future;
-use futures::stream::{StreamExt};
 use std::sync::{Arc, Mutex};
 
 use async_std::task;
-use public_ip::{dns, http, BoxToResolver, ToResolver};
+use colored::*;
+use enigo::{Enigo, /* Key, KeyboardControllable,*/ MouseButton, MouseControllable};
+// use async::task;
+use futures::future;
+use futures::stream::StreamExt;
 use local_ipaddress;
+use public_ip::{BoxToResolver, dns, http, ToResolver};
+
+// use warp::Filter;
 
 #[tokio::main]
 async fn main() {
@@ -48,9 +48,23 @@ async fn main() {
                         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
                     };
 
-                    // println!("Received: {:?}", line_str);
-
                     let line_vec: Vec<&str> = line_str.split(" ").collect();
+
+                    // println!("Received: {}\n", line_str);
+
+                    // Log messages start with '#'
+                    if line_vec[0] == "#" {
+                        // This is a string the client wants to display.
+                        let rgb = match line_vec[1] {
+                            "Debug:" => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
+                            "Info:" => Color::TrueColor { r: 0x00, g: 0xa0, b: 0x00 },
+                            "Warning:" => Color::TrueColor { r: 0xff, g: 0x7c, b: 0x00 },
+                            "Error:" => Color::TrueColor { r: 0xb0, g: 0x00, b: 0x00 },
+                            _ => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
+                        };
+                        println!("{}", &line_str[2..].color(rgb));
+                        ()
+                    }
 
                     let mut mb = |action: &str, button: MouseButton| {
                         match action {
