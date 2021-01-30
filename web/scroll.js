@@ -51,6 +51,11 @@ export function register_event_handlers()
         handle_scroll_end(ev);
         return util.stop(ev);
       })
+      .on('mousemove touchmove', util.rate_limiter((ev) => {
+        handle_scroll_move(ev);
+        return util.stop(ev);
+      }, settings.SCROLL_MOVE_RATE_LIMIT_HZ))
+
       .on('mousemove touchmove', (ev) => {
         handle_scroll_move(ev);
         return util.stop(ev);
