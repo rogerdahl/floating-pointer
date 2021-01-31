@@ -73,7 +73,7 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
 - Using a drag operation to select text is cumbersome without a real mouse. Fortunately, even if there is no visible caret, there may be an invisible one. So text can be selected as if there is a caret. Chrome supports selecting text by clicking at one end of the selection, then holding shift while clicking at the other end. Firefox additionally supports creating a selection with one click then using Shift + arrow keys to make the selection.
 
-  FireFox and Chrome both also have caret browsing modes, which can be toggled on and off with F7.
+  Firefox and Chrome both also have caret browsing modes, which can be toggled on and off with F7.
 
   In some windows, such as error dialog boxes, you can also try to copy the text without selecting it first, by just clicking in the window and pressing Ctrl+C. 
 
@@ -121,7 +121,7 @@ Anyone that can connect to the WebSocket that remote-mouse opens on the desktop 
 
 ### Build on Linux
 
-This procedure has been tested on Linux Mint 19 ans 20. It should work an Ubuntu and other Debian derivatives as well.
+This procedure has been tested on Linux Mint 19 and 20. It should work on recent Ubuntu and other Debian derivatives as well.
 
 You need Rust for building this. Rust usually installs with a single command, as described at:
 
