@@ -116,7 +116,9 @@ function handle_scroll_end(ev)
   }
   else {
     scroll.last_dy = touch.get_delta(ev).y;
-    log.info(ev, `Tap in scroll area to start auto-scroll @ ${format_speed(scroll.last_dy)}`);
+    const msg_str = `Tap in scroll area to start auto-scroll @ ${format_speed(scroll.last_dy)}`;
+    log.debug(ev, msg_str);
+    log.status(msg_str);
     stop_all(ev);
   }
 }
@@ -162,7 +164,8 @@ export function stop_all(ev)
 function start_auto_scroll(ev)
 {
   const dy = scroll.last_dy;
-  log.info(ev, `Starting auto-scroll @ ${format_speed(dy)}`);
+  let msg_str;
+  log.debug(ev, 'Starting auto-scroll');
   if (smooth_toggle) {
     start_middle_press(ev);
     ws.send('touch', 0, Math.round(dy_to_smooth_speed(dy)));
@@ -170,6 +173,13 @@ function start_auto_scroll(ev)
   else {
     start_interval_timer(ev);
   }
+  // msg_str = (
+  //     `${smooth_toggle ? 'Smooth' : 'Wheel'} auto-scrolling ${format_speed(dy)}`
+  //     ` - Tap anywhere to stop`
+  // )
+  //
+  //   log.status();
+  //  @
   scroll.auto_active = true;
   sync_indicator(ev, dy);
 }
