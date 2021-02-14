@@ -1,12 +1,10 @@
 // Logging, tracing, object and stack dumps
 
-
 'use strict';
 
-import * as settings from "./settings.js";
-import * as util from "./util.js";
-import * as ws from "./ws.js";
-
+import * as settings from './settings.js';
+import * as util from './util.js';
+import * as ws from './ws.js';
 
 export function status(status_str)
 {
@@ -20,7 +18,7 @@ export function debug(...obj_list)
 
 export function info(...obj_list)
 {
-  return log(obj_list, 'log-info', settings.LogLevel.INFO);
+  return log(obj_list, 'log.debug', settings.LogLevel.INFO);
 }
 
 export function warning(...obj_list)
@@ -41,9 +39,13 @@ export function critical(...obj_list)
 
 export function cmd_sent(...obj_list)
 {
-  return log(obj_list, 'log-cmd', settings.LogLevel.DEBUG, '->');
+  if (obj_list[0][0] === '#') {
+    return;
+  }
+  return log(obj_list, 'log-cmd', settings.LogLevel.INFO,
+      '->', true
+  );
 }
-
 
 export function dump_obj(obj_name, obj)
 {
@@ -91,10 +93,7 @@ export function register_global_error_handler()
       column_no,
       error_obj
   ) {
-    console.error('START global_error_handler()');
-    error('START global_error_handler()');
-
-    if (msg.toLowerCase().indexOf("script error") > -1) {
+    if (msg.toLowerCase().indexOf('script error') > -1) {
       alert(
           `Error: A Cross-Origin / CORS error occurred. To prevent leaking information, the error details are 
                 only available in the browser console.`
@@ -126,13 +125,12 @@ export function register_global_error_handler()
   };
 }
 
-
-// Create a log line and write it one or more destinations depending on what's enabled in the settings. Destinations
-// are:
+// Create a log line and write it one or more destinations depending on what's enabled in the
+// settings. Destinations are:
 // - The browser console
 // - The host (where it's dumped to the shell)
 // - The client UI (where it appears in the main touch input area)
-function log(obj_list, msg_class, log_level, prefix_str = null)
+function log(obj_list, msg_class, log_level, prefix_str = null, skip_ws = false)
 {
   if (log_level < settings.LOG_LEVEL) {
     return;
@@ -141,7 +139,10 @@ function log(obj_list, msg_class, log_level, prefix_str = null)
       `${prefix_str ? prefix_str : `${LOG_LEVEL_TO_NAME.get(log_level)}:`} ` +
       `${obj_list_to_str(obj_list)}`
   );
-  ws.send(`# ${msg_str}`);
+  if (!skip_ws) {
+    ws.send(`# ${msg_str}`);
+
+  }
   console.log(msg_str);
   log_ui(msg_str, msg_class);
 }
@@ -156,12 +157,10 @@ const LOG_LEVEL_TO_NAME = new Map([
   [50, 'Critical'],
 ]);
 
-
 function obj_list_to_str(obj_list)
 {
   return Object.values(obj_list).map((obj) => _name_str(obj));
 }
-
 
 function _name_str(obj)
 {
@@ -214,59 +213,63 @@ export function hook_console()
     console.defaultLog = console.log.bind(console);
     console.log = function () {
       console.everything.push({
-        "type": "log",
-        "datetime": Date().toLocaleString(),
-        "value": Array.from(arguments)
+        'type': 'log',
+        'datetime': Date().toLocaleString(),
+        'value': Array.from(arguments)
       });
       console.defaultLog.apply(console, arguments);
     }
     console.defaultError = console.error.bind(console);
     console.error = function () {
       console.everything.push({
-        "type": "error",
-        "datetime": Date().toLocaleString(),
-        "value": Array.from(arguments)
+        'type': 'error',
+        'datetime': Date().toLocaleString(),
+        'value': Array.from(arguments)
       });
       console.defaultError.apply(console, arguments);
     }
     console.defaultWarn = console.warn.bind(console);
     console.warn = function () {
       console.everything.push({
-        "type": "warn",
-        "datetime": Date().toLocaleString(),
-        "value": Array.from(arguments)
+        'type': 'warn',
+        'datetime': Date().toLocaleString(),
+        'value': Array.from(arguments)
       });
       console.defaultWarn.apply(console, arguments);
     }
     console.defaultDebug = console.debug.bind(console);
     console.debug = function () {
       console.everything.push({
-        "type": "debug",
-        "datetime": Date().toLocaleString(),
-        "value": Array.from(arguments)
+        'type': 'debug',
+        'datetime': Date().toLocaleString(),
+        'value': Array.from(arguments)
       });
       console.defaultDebug.apply(console, arguments);
     }
   }
 }
 
-
 export var assert = console.assert.bind(console);
 export var lg = console.log.bind(console);
 
-// export function assert(pred_obj, msg_str) {
-//     if (!pred_obj) {
-//         let error_list = [
-//             `ASSERT FAILED: `,
-//             `${msg_str}`,
-//         ];
-//
-//         console.error(error_list.join('\n'));
-//         for (const exc_line of error_list) {
-//             dbg_ui(exc_line, 'log-error');
-//         }
-//     }
-// }
+const logger = className => {
+  return new Proxy(new className(), {
+    get: function (target, name, receiver) {
+      if (!target.hasOwnProperty(name)) {
+        if (typeof target[name] === 'function') {
+          console.log(
+              'Calling Method : ',
+              name,
+              '|| on : ',
+              target.constructor.name
+          );
+        }
+        return new Proxy(target[name], this);
+      }
+      return Reflect.get(target, name, receiver);
+    }
+  });
+};
 
 // Add a log line to the log displayed in the UI.
 //

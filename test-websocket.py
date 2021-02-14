@@ -5,14 +5,13 @@
 
 import asyncio
 import logging
+import math
 import sys
 import time
 
-import math
 import websockets
 
 log = logging.getLogger(__name__)
-
 
 def main():
     while True:
@@ -21,7 +20,6 @@ def main():
         except Exception as e:
             print(str(e))
         time.sleep(1)
-
 
 async def test():
     uri = "ws://localhost:7780/ws"
@@ -39,7 +37,6 @@ async def test():
             i += .1
             if i >= 360:
                 i -= 360
-
 
 if __name__ == '__main__':
     sys.exit(main())

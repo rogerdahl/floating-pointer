@@ -2,15 +2,15 @@
 
 'use strict';
 
-import * as settings from "./settings.js";
-import * as log from "./log.js";
+import * as settings from './settings.js';
+import * as log from './log.js';
 
 // Exported
 
 // Call before registering any other handlers for touch or mouse events.
 export function register_start_handler()
 {
-  log.info('touch.register_start_handler()');
+  log.debug('touch.register_start_handler()');
   // To ensure that this event is triggered before all other touch events, we bind it to the document capture
   // phase. jQuery can only bind events in the bubble phase, where events on document fire last, so we use
   // addEventListener() directly.
@@ -27,7 +27,7 @@ export function register_start_handler()
 // Call after registering all other handlers for touch or mouse events.
 export function register_end_handler()
 {
-  log.info('touch.register_end_handler()');
+  log.debug('touch.register_end_handler()');
   // We bind this event to the document bubble phase, which should ensure that it is triggered
   // after all other touch events.
   $(document).on('mouseup touchend', function (ev) {
@@ -62,11 +62,13 @@ export function get_start_pos(ev)
   return p;
 }
 
-// Get the delta x, y positions and time (float seconds) since a previously recorded position and time.
-// delta_key unset or set to '': Delta is been current and start of touch.
-// delta_key set, first call with key: Delta is between current and start of touch.
-// delta_key set, calls with previously used key: Delta is between current and the position and time that was current
-// on the previous call with the same key.
+/*
+ Get the delta x, y positions and time (float seconds) since a previously recorded position and time.
+ - delta_key unset or set to '': Delta is been current and start of touch.
+ - delta_key set, first call with key: Delta is between current and start of touch.
+ - delta_key set, calls with previously used key: Delta is between current and the position and time that was current
+ on the previous call with the same key.
+*/
 export function get_delta(ev, delta_key = '')
 {
   log.debug(ev, `get_delta() delta_key=${delta_key}`)
@@ -93,9 +95,9 @@ export function is_within_tap_radius(ev, delta_key = '')
 export function is_short_touch(ev, delta_key = '')
 {
   const delta_pos = get_delta(ev, delta_key);
-  const is_within_tap_threshold = delta_pos.ts < settings.TAP_THRESHOLD_MS;
-  log.debug(ev, `is_within_tap_threshold() -> ${is_within_tap_threshold}`);
-  return is_within_tap_threshold;
+  const is_within_tap_duration = delta_pos.ts < settings.TAP_DURATION_MS;
+  log.debug(ev, `is_within_tap_duration() -> ${is_within_tap_duration}`);
+  return is_within_tap_duration;
 }
 
 export function is_long_touch(ev, delta_key = '')
@@ -169,7 +171,7 @@ export function get_pos_time(ev)
     return new PosTime(t.clientX, t.clientY);
   }
   else {
-    log.debug(ev, `Received a mouse event: ${ev.type}`)
+    log.debug(ev, `Received a mouse event: ${ev.type}`);
     return new PosTime(ev.clientX, ev.clientY);
   }
 }

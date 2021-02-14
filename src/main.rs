@@ -1,21 +1,54 @@
-use std::str;
-use std::sync::{Arc, Mutex};
+#[allow(dead_code)]
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate lazy_static;
 
 use async_std::task;
+use clap::{App, Arg};
 use colored::*;
 use enigo::{Enigo, /* Key, KeyboardControllable,*/ MouseButton, MouseControllable};
-// use async::task;
-use futures::future;
-use futures::stream::StreamExt;
+use float_extras::f64::modf;
+use float_extras;
+use futures::{future, StreamExt};
 use local_ipaddress;
 use public_ip::{BoxToResolver, dns, http, ToResolver};
+use std::str;
+use std::sync::{Arc, Mutex, MutexGuard};
+use std::{thread, time};
+use warp::Filter;
+use warp::http::header::{HeaderMap, HeaderValue};
 
-// use warp::Filter;
+const POINTER_REFRESH_FREQ_HZ: f64 = 120.0;
 
 #[tokio::main]
 async fn main() {
-    use warp::http::header::{HeaderMap, HeaderValue};
-    use warp::Filter;
+    let matches = App::new("Remote Mouse")
+        .arg(Arg::with_name("debug")
+            .short("s")
+            .long("debug")
+        )
+        .arg(Arg::with_name("friction")
+            .short("f")
+            .long("friction")
+            .default_value("0.004")
+            .help("Higher friction values cause the mouse pointer to slow down sooner")
+            .takes_value(true)
+        )
+        .arg(Arg::with_name("sensitivity")
+            .short("i")
+            .long("sensitivity")
+            .default_value("0.1")
+            .help("Higher sensitivity value causes the mouse pointer to 'drift' faster")
+            .takes_value(true)
+        ).get_matches();
+
+    let pointer_friction = value_t!(
+        matches.value_of("friction"), f64).unwrap_or_else(|e| e.exit());
+    let pointer_sensitivity = value_t!(
+        matches.value_of("sensitivity"), f64).unwrap_or_else(|e| e.exit());
+
+    // println!("friction={:?} sensitivity={:?}", pointer_friction, pointer_sensitivity);
 
     let mut headers = HeaderMap::new();
     headers.insert("Expires", HeaderValue::from_static("0"));
@@ -31,30 +64,41 @@ async fn main() {
     let web = warp::get()
         .and(warp::fs::dir("./web/"));
 
+    // Prepare Enigo, which handles event injections.
+    // let enigo = Arc::new(Mutex::new(Enigo::new()));
+
+    let pointer_sensitivity = pointer_sensitivity.clone();
+    let pointer_friction = pointer_friction.clone();
+
+    let (ttx, rrx) = std::sync::mpsc::sync_channel::<(f64, f64)>(0);
+
     // WebSocket
     let ws = warp::path("ws")
         .and(warp::ws())
-        .map(|ws: warp::ws::Ws| {
+        .map(move |ws: warp::ws::Ws| {
+            let ttx = ttx.clone();
+
             ws.on_upgrade(|websocket| {
                 let (_tx, rx) = websocket.split();
                 let enigo = Arc::new(Mutex::new(Enigo::new()));
+
                 rx.for_each(move |line| {
                     let mut enigo = enigo.lock().unwrap();
-
                     let line = line.unwrap();
                     let line_bytes = line.as_bytes();
                     let line_str = match str::from_utf8(line_bytes) {
                         Ok(v) => v,
                         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
                     };
-
                     let line_vec: Vec<&str> = line_str.split(" ").collect();
 
+                    // For debugging, just print what was received and don't generate any events.
                     // println!("Received: {}\n", line_str);
+                    // return future::ready(());
 
-                    // Log messages start with '#'
+                    // Log messages start with '#'. They're just strings the client wants to
+                    // display.
                     if line_vec[0] == "#" {
-                        // This is a string the client wants to display.
                         let rgb = match line_vec[1] {
                             "Debug:" => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
                             "Info:" => Color::TrueColor { r: 0x00, g: 0xa0, b: 0x00 },
@@ -63,33 +107,55 @@ async fn main() {
                             _ => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
                         };
                         println!("{}", &line_str[2..].color(rgb));
-                        ()
+                        return future::ready(());
                     }
 
                     let mut mb = |action: &str, button: MouseButton| {
                         match action {
                             "click" => enigo.mouse_click(button),
-                            "down" => enigo.mouse_down(button),
-                            "up" => enigo.mouse_up(button),
+                            "down" => {
+                                enigo.mouse_down(button);
+                            }
+                            "up" => {
+                                enigo.mouse_up(button);
+                            }
                             _ => (),
                         };
                     };
 
                     match line_vec[0] {
-                        "left" => mb(line_vec[1], MouseButton::Left),
-                        "middle" => mb(line_vec[1], MouseButton::Middle),
-                        "right" => mb(line_vec[1], MouseButton::Right),
+                        "left" => {
+                            mb(line_vec[1], MouseButton::Left);
+                        }
+                        "middle" => {
+                            mb(line_vec[1], MouseButton::Middle);
+                        }
+                        "right" => {
+                            mb(line_vec[1], MouseButton::Right);
+                        }
                         "touch" => {
-                            let ix = line_vec[1].parse::<i32>().unwrap();
-                            let iy = line_vec[2].parse::<i32>().unwrap();
-                            enigo.mouse_move_relative(ix, iy);
+                            let x = line_vec[1].parse::<f64>().unwrap();
+                            let y = line_vec[2].parse::<f64>().unwrap();
+                            mouse_move_relative_err(enigo, x, y);
+                            ttx.send((0.0, 0.0)).unwrap();
+                        }
+                        "spin" => {
+                            let x = line_vec[1].parse::<f64>().unwrap();
+                            let y = line_vec[2].parse::<f64>().unwrap();
+                            ttx.send((x, y)).unwrap();
                         }
                         "scroll" => {
                             let iy = line_vec[1].parse::<i32>().unwrap();
                             enigo.mouse_scroll_y(iy);
                         }
+                        "sleep" => {
+                            let i = line_vec[1].parse::<u64>().unwrap();
+                            let ms = time::Duration::from_millis(i);
+                            thread::sleep(ms);
+                        }
                         _ => (),
                     };
+
                     future::ready(())
                 })
             })
@@ -99,6 +165,36 @@ async fn main() {
             //     }
             // });
         });
+
+    let enigo = Arc::new(Mutex::new(Enigo::new()));
+
+    thread::spawn(move || {
+        let ms = time::Duration::from_millis((1.0 / POINTER_REFRESH_FREQ_HZ * 1000.0) as u64);
+        let mut fx = 0.0;
+        let mut fy = 0.0;
+        let mut speed = 0.0;
+
+        loop {
+            let enigo = enigo.lock().unwrap();
+            let result = rrx.try_recv();
+            if result.is_ok() {
+                let (nx, ny) = result.unwrap();
+
+                fx = nx * pointer_sensitivity;
+                fy = ny * pointer_sensitivity;
+
+                speed = 1.0;
+            }
+
+            mouse_move_relative_err(enigo, fx * speed, fy * speed);
+
+            if speed > 0.0 {
+                speed -= pointer_friction;
+            }
+
+            thread::sleep(ms);
+        }
+    });
 
     let routes = index.or(web).or(ws).with(warp::reply::with::headers(headers));
 
@@ -110,9 +206,43 @@ async fn main() {
     warp::serve(routes).run(([0, 0, 0, 0], 7780)).await;
 }
 
+struct PointerErrorS {
+    x: f64,
+    y: f64,
+}
+
+lazy_static! {
+    static ref PE: Mutex<PointerErrorS> = Mutex::new(PointerErrorS { x: 0.0, y: 0.0 });
+}
+
+// We use f64 floats, which we round to ints before passing to Enigo. We track the rounding errors
+// and, when the combined error reaches one pixel or more, we remove one pixel from the error and
+// apply it to the mouse pointer position. Without this, the mouse pointer will tend to drop into
+// "tracks" when moving.
+fn track_cumulative_error(mut err_v: f64, v: f64) -> (f64, i32) {
+    let (mut int, frac) = modf(v);
+    err_v += frac;
+    if err_v > 1.0 {
+        int += 1.0;
+        err_v -= 1.0;
+    } else if err_v < -1.0 {
+        int -= 1.0;
+        err_v += 1.0;
+    }
+    return (err_v, int as i32);
+}
+
+fn mouse_move_relative_err(mut enigo: MutexGuard<Enigo>, x: f64, y: f64) -> () {
+    let mut pointer_error = PE.lock().unwrap();
+    let (err_x_, int_x) = track_cumulative_error(pointer_error.x, x);
+    pointer_error.x = err_x_;
+    let (err_y_, int_y) = track_cumulative_error(pointer_error.y, y);
+    pointer_error.y = err_y_;
+    enigo.mouse_move_relative(int_x, int_y);
+}
 
 fn get_public_network_addr() -> String {
-// List of resolvers to try and get an IP address from
+    // List of resolvers to try and get an IP address from
     let resolver = vec![
         BoxToResolver::new(dns::OPENDNS_RESOLVER),
         BoxToResolver::new(http::HTTP_IPIFY_ORG_RESOLVER),

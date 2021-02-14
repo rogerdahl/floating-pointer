@@ -4,7 +4,7 @@
 
 Control the mouse pointer on a Linux desktop using the touch screen on any phone or tablet.
 
-This runs directly in the browser, so there's no app to install on the phone or tablet.
+Runs directly in the browser, so there's no app to install on the phone or tablet.
 
 ## Usage
 
@@ -20,24 +20,22 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
 - Keep a mouse button pressed by touching the button area until it lights up. Release in the same way.
 
-- Tap a pressed button to first release it, then click it.
+- Tap a pressed button to release it. Tap again to click.
 
 - Double-tap a button to double-click it.
-
-- The threshold that separates a button tap from a press is configurable.
 
 
 ### Pointer
 
-- To move the mouse pointer, swipe in the `Touch` area.
+- Swipe and _release_ in the `Touch` area to quickly move the mouse pointer to the approximate right area. Then swipe and _hold_ to fine tune the pointer location.
 
 - Tapping anywhere in the `Touch` area performs a left button click.
 
-- The pointer sensitivity is configurable.
+- Simple inertia and friction is simulated for the mouse pointer movements. The friction can be adjusted to cause the pointer to drift further or come to a stop sooner.
 
 ### Mouse wheel scrolling
 
-- To scroll, drag up or down in the`Scroll` area (and remember to hover the mouse pointer over the are to scroll).
+- To scroll, drag up or down in the`Scroll` area, then hold. Remember to hover the mouse pointer over the are to scroll.
 
  - Notice that movement is only required when you want to change the speed or direction. This is different from most mice and touchpads, which require some sort of continuous movement in order to keep scrolling.
 
@@ -49,7 +47,7 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
   This function depends on functionality that is built into Firefox but requires a plugin in Chrome.
   
-  To tell if it will work in your browser, try to drag in a web page while holding the middle mouse button (while physically at your desktop). This app just emulates that simple action.
+  To tell if it will work in your browser, try to drag in a web page while holding the middle mouse button (while physically at your desktop). This app just emulates that action.
   
   To use this function with Firefox, enable both `Use autoscrolling` and `Use smooth scrolling` in the Firefox settings (they're under `Browsing`, near the end of the `General` section). Then tap the `Smooth` button in the lower right in the app UI.
   
@@ -81,7 +79,11 @@ This runs directly in the browser, so there's no app to install on the phone or 
 
 ## Configuration
 
-Sensitivity and related settings can be modified by changing the `const` values in `web/settings.js`.
+The friction and sensitivity settings that control mouse pointer movement after releasing the screen are command line arguments. E.g.,:
+
+    - cargo run -- --friction 0.01 --sensitivity 0.1
+
+Sensitivity for the other controls, and related settings can be modified by changing the `const` values in `web/settings.js`.
 
 - Sensitivity settings:
 
@@ -91,9 +93,9 @@ Sensitivity and related settings can be modified by changing the `const` values 
 
     Input values are multiplied with these before they're used. Higher values increase sensitivity (less movement is required on the touchpad).
 
-- Tap / hold / swipe thresholds:
+- Tap / hold / swipe durations:
 
-    - `TAP_THRESHOLD_MS`
+    - `TAP_DURATION_MS`
     - `TAP_RADIUS_PIXELS`
 
     These provide the time and radius where a touch transitions from a tap to a hold or swipe.
@@ -111,7 +113,6 @@ Sensitivity and related settings can be modified by changing the `const` values 
 - Wait, in ms, between each attempt to reconnect a lost WebSocket connection to the desktop:
 
     - `WEB_SOCKET_TIMEOUT_MS`
-
 
 ## Host security considerations
 

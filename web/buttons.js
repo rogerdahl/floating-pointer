@@ -2,17 +2,17 @@
 
 'use strict';
 
-import * as settings from "./settings.js";
-import * as ws from "./ws.js";
-import * as touch from "./touch.js";
-import * as log from "./log.js";
-import * as util from "./util.js";
+import * as settings from './settings.js';
+import * as ws from './ws.js';
+import * as touch from './touch.js';
+import * as log from './log.js';
+import * as util from './util.js';
 
 // Exported
 
 export function register_event_handlers()
 {
-  log.info('buttons.register_event_handlers()');
+  log.debug('buttons.register_event_handlers()');
 
   $('#left,#middle,#right')
       // $('#left,#middle,#right')
@@ -40,7 +40,7 @@ export function register_event_handlers()
             handle_touch_start(ev, 'left');
             handle_touch_end(ev);
           }
-          return util.stop(ev);
+          // return util.stop(ev);
         });
   }
   for (let name of ['left', 'middle', 'right']) {
@@ -48,12 +48,10 @@ export function register_event_handlers()
   }
 }
 
-
 // Local
 
 let g_state = null;
 let g_dict = {};
-
 
 function handle_touch_start(ev, name)
 {
@@ -66,7 +64,7 @@ function handle_touch_start(ev, name)
   // elsewhere, where we check if a touch should be handled as a click or toggle at the time of
   // release is not sufficient here. Instead, we start a timer that triggers at the time that the
   // touch turns into a toggle.
-  g_state.hold_timer = setTimeout(toggle, settings.TAP_THRESHOLD_MS, ev);
+  g_state.hold_timer = setTimeout(toggle, settings.TAP_DURATION_MS, ev);
   g_state.hold = true;
   sync_classes();
 }

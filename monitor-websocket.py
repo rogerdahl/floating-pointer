@@ -12,7 +12,6 @@ import websockets
 
 log = logging.getLogger(__name__)
 
-
 async def monitor_handler(websocket, path):
     while True:
         try:
@@ -23,7 +22,6 @@ async def monitor_handler(websocket, path):
         else:
             print(line_str)
 
-
 def main():
     while True:
         try:
@@ -33,7 +31,6 @@ def main():
         except Exception as e:
             print(str(e))
         time.sleep(1)
-
 
 # async def test():
 #     uri = "ws://localhost:7781/ws"

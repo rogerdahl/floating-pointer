@@ -16,7 +16,6 @@ export function acceleration_curve(speed_float, adj_map)
   return ((s_exp * adj_map.b) - 1) * s_sign;
 }
 
-
 export function sleep(ms)
 {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -47,7 +46,6 @@ export function is_iterable(obj)
   }
   return typeof obj[Symbol.iterator] === 'function';
 }
-
 
 // Get all properties belonging to, or inherited by the object.
 export function get_properties(obj)
@@ -82,20 +80,59 @@ export function stop(ev)
   return false;
 }
 
-// Wrap a method and limit the number of calls that get through to the method.
+// Wrap a method and limit the number of calls that get through to the method. The first
+// implementation of this stored each `ev` and, on timeout, called the last one and immediately
+// started a new timer. That caused the order of events to be mixed up. It could trigger move events
+// after touch end events, etc. This one instead just unblocks at timeout, lets the next event
+// through, then blocks again.
 export function rate_limiter(fn, limit_hz)
 {
   let delay_ms = 1000 * (1 / limit_hz)
   let is_blocked = false;
+  let freq = new FrequencyCounter();
 
   return function (ev) {
+    $('#right').text(freq.get_hz());
+
     if (!is_blocked) {
       is_blocked = true;
       setTimeout(function () {
         is_blocked = false;
-        fn(ev);
       }, delay_ms);
+
+      fn(ev);
+
+      freq.count_event();
     }
   };
+}
+
+class FrequencyCounter
+{
+  start_ts;
+  event_count;
+
+  constructor()
+  {
+    this.start_ts = Date.now();
+    this.event_count = 0;
+  }
+
+  reset()
+  {
+    this.start_ts = Date.now();
+    this.event_count = 0;
+  }
+
+  count_event()
+  {
+    this.event_count += 1;
+  }
+
+  get_hz()
+  {
+    let elapsed_sec = (Date.now() - this.start_ts) / 1000;
+    return `Actual: ${(this.event_count / elapsed_sec).toFixed(2)}Hz`;
+  }
 }
 

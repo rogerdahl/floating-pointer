@@ -5,12 +5,13 @@
 
 // Sensitivity settings. Input values are multiplied with these before they're used.
 // Higher values are more sensitive (less movement is required on the touchpad).
-export const TOUCH_MOVE_SENSITIVITY = 4.0;
-export const WHEEL_SCROLL_SENSITIVITY = 0.02;
-export const SMOOTH_SCROLL_SENSITIVITY = 0.3;
+export const TOUCH_MOVE_SENSITIVITY = 2.0;
+export const WHEEL_SCROLL_SENSITIVITY = 0.06;
+export const SMOOTH_SCROLL_SENSITIVITY = 0.003;
 
-// Tap / hold / swipe thresholds (time and radius)
-export const TAP_THRESHOLD_MS = 300;
+
+// Tap / hold / swipe durations (time and radius)
+export const TAP_DURATION_MS = 300;
 export const TAP_RADIUS_PIXELS = 20;
 
 // Enable Touch area to also pick up left clicks.
@@ -24,8 +25,8 @@ export const SCROLL_INTERVAL_MS = 20;
 export const WEB_SOCKET_TIMEOUT_MS = 1000;
 
 // Max number of event messages to send over the network to the desktop machine per second.
-export const MOUSE_MOVE_RATE_LIMIT_HZ = 30;
-export const SCROLL_MOVE_RATE_LIMIT_HZ = 30;
+export const MOUSE_MOVE_RATE_LIMIT_HZ = 120;
+export const SCROLL_MOVE_RATE_LIMIT_HZ = 120;
 
 // Logging
 export const LogLevel = {

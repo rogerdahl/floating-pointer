@@ -125,7 +125,7 @@ body {
     filter: brightness(50%);
 }
 
-.log-info {
+.log.debug {
     color: #00ff00 !important;
     filter: brightness(50%);
 }
@@ -146,7 +146,6 @@ body {
     color: #ffff00 !important;
     filter: brightness(50%);
 }
-
 
 .button-touch {
     filter: brightness(50%);
@@ -172,7 +171,6 @@ body {
 #scroll-tip.visible {
     display: inline;
 }
-
 
 #overlay {
     position: absolute;

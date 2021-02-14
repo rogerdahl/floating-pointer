@@ -6,6 +6,8 @@
 
 'use strict';
 
+import * as log from './log.js';
+
 // Exported
 
 // export async function connect(host, port, connection_name = '') {
@@ -26,22 +28,22 @@
 
 export function connect(connection_name = '')
 {
-  //log.status(`Status: Connecting to ${location.host}...`);
+  // log.status(`Status: Connecting to ${location.host}...`);
   _get_socket(connection_name);
 }
 
 // Send a mouse emulation command to the desktop machine.
 export function send(...str_list)
 {
-  return send_named('', ...str_list);
+  log.cmd_sent(...str_list);
+  return send_named('', str_list);
 }
-
 
 // Local
 
 const g_socket_map = new Map();
 
-function send_named(connection_name, ...str_list)
+function send_named(connection_name, str_list)
 {
   let s = _get_socket(connection_name);
   const msg_str = str_list.join(' ');
@@ -49,7 +51,7 @@ function send_named(connection_name, ...str_list)
     s.send(msg_str);
   }
   else {
-    //log.error('Socket not ready');
+    console.error('Socket not ready');
   }
 }
 
@@ -61,7 +63,6 @@ function _get_socket(connection_name)
   }
   return g_socket_map.get(connection_name);
 }
-
 
 function create_socket(host, port, connection_name)
 {
@@ -80,17 +81,17 @@ function create_socket(host, port, connection_name)
     return s.readyState === 1;
   }
   s.onopen = () => {
-    //log.status(`Status: Connected to ${location.host}`);
+    log.status(`Status: Connected to ${location.host}`);
   };
   s.onmessage = (ev) => {
-    //log.status(`Status: Message from host: ${ev.data}`);
+    log.status(`Status: Message from host: ${ev.data}`);
   }
   s.onclose = () => {
-    //log.status(`Status: Attempting to reconnect to ${host}...`);
+    log.status(`Status: Attempting to reconnect to ${host}...`);
     s.wait_then_create();
   }
   s.onerror = (ev) => {
-    //log.status(`Status: WebSocket error: ${ev.message}`);
+    log.status(`Status: WebSocket error: ${ev.message}`);
     s.wait_then_create();
   }
   return s;

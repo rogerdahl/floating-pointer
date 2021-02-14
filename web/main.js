@@ -2,13 +2,12 @@
 
 'use strict';
 
-import * as buttons from "./buttons.js";
-import * as move from "./move.js";
-import * as scroll from "./scroll.js";
-import * as touch from "./touch.js";
-import * as ws from "./ws.js";
-import * as log from "./log.js";
-
+import * as buttons from './buttons.js';
+import * as move from './move.js';
+import * as scroll from './scroll.js';
+import * as touch from './touch.js';
+import * as ws from './ws.js';
+import * as log from './log.js';
 
 $(document).ready(_ev => {
   // alert('ready');
@@ -22,7 +21,7 @@ $(document).ready(_ev => {
 
   $('#full-screen').on('click', () => {
     // throw Error('TEST ERROR HANDLER');
-    const grid_el = $("#full")[0];
+    const grid_el = $('#full')[0];
     if (!document.fullscreenElement) {
       grid_el.requestFullscreen().catch(err => {
         alert(`Unable to enter full screen mode: ${err.message} (${err.name})`);
@@ -40,8 +39,8 @@ $(document).ready(_ev => {
   // https://github.com/Hiswe/vh-check
   let view_height = null;
   $('#full').on('fullscreenchange', (ev) => {
-    const grid_el = $("#full")[0];
-    const full_el = $("#full-screen");
+    const grid_el = $('#full')[0];
+    const full_el = $('#full-screen');
     full_el.toggleClass('highlight', document.fullscreenElement);
     if (document.fullscreenElement) {
       log.debug(ev, `Element: ${document.fullscreenElement.id} entered full-screen mode`);
