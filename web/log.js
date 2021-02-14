@@ -42,7 +42,7 @@ export function cmd_sent(...obj_list)
   if (obj_list[0][0] === '#') {
     return;
   }
-  return log(obj_list, 'log-cmd', settings.LogLevel.INFO,
+  return log(obj_list, 'log-cmd', settings.LogLevel.DEBUG,
       '->', true
   );
 }
