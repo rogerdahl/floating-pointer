@@ -2,46 +2,48 @@
 
 <img align="right" width="40%" src="./assets/screenshot.png">
 
-Control the mouse pointer on a Linux desktop using the touch screen on any phone or tablet.
+Use your phone or tablet as a fast and accurate virtual mouse for your desktop PC. Should work on most recent Linux, Windows and Mac machines.
 
-Runs directly in the browser, so there's no app to install on the phone or tablet.
+Runs directly in the browser, so there's no app to install on your device.
+
+Free and open source. Connects your device directly to your PC over your local network. There are no other services involved. Internet connection not required.
+
 
 ## Usage
 
-1. Run `remote-mouse` on your Linux desktop machine
-2. Browse to `http://<your machine>:7780` from your phone or tablet
+1. Start `remote-mouse` on your desktop machine, and note the local link it displays.
+2. Open the browser on your device and type in the link.
 3. Enjoy!
 
-### Buttons
+
+#### Pointer
+
+- The mouse pointer moves according to a simple model that simulates inertia and friction. It provides quick movement over large areas, and accurate movement within small areas.
+
+  Swipe and _release_ in the `Touch` area to quickly send the mouse pointer flying towards an area. _hold_ to catch the pointer and bring it under direct control, then _drag_ to move it to the desired location.
+
+  Tapping anywhere in the `Touch` area performs a left mouse button click, so moving the pointer is often followed by a _release_ and _tap_ at the location one is already touching. Then, still from the same location, the pointer can be sent towards the next location with a new swipe.   
+
+
+#### Buttons
 
 - Click the left-, middle- and right mouse buttons by tapping in the `Left`, `Middle` and `Right` areas.
 
 - The left mouse button can also be clicked by tapping in the `Touch` area.
 
-- Keep a mouse button pressed by touching the button area until it lights up. Release in the same way.
-
-- Tap a pressed button to release it. Tap again to click.
+- Keep a mouse button pressed by touching the button area until it lights up. Tap anywhere to release the button.
 
 - Double-tap a button to double-click it.
 
 
-### Pointer
+#### Mouse wheel scrolling
 
-- Swipe and _release_ in the `Touch` area to quickly move the mouse pointer to the approximate right area. Then swipe and _hold_ to fine tune the pointer location.
+- _Drag_ up or down in the `Scroll` area to start scrolling. Increase the speed by dragging away from the starting point. Then _hold_ to keep scrolling. (You may have to hover the mouse pointer over the are to scroll first).
 
-- Tapping anywhere in the `Touch` area performs a left button click.
+- Notice that movement is only required when you want to change the speed or direction. This is different from most mice and touchpads, which require some sort of continuous movement in order to keep scrolling.
 
-- Simple inertia and friction is simulated for the mouse pointer movements. The friction can be adjusted to cause the pointer to drift further or come to a stop sooner.
 
-### Mouse wheel scrolling
-
-- To scroll, drag up or down in the`Scroll` area, then hold. Remember to hover the mouse pointer over the are to scroll.
-
- - Notice that movement is only required when you want to change the speed or direction. This is different from most mice and touchpads, which require some sort of continuous movement in order to keep scrolling.
-
- - The sensitivity of the `Scroll` area can be configured independently from the `Touch` area.
-
-### Browser smooth scrolling
+#### Browser smooth scrolling
 
 - Mouse wheel scrolling moves in small jumps, which is not ideal for those hours of doomscrolling bliss, so this app has a mode that triggers smooth scrolling in the browser.
 
@@ -52,8 +54,9 @@ Runs directly in the browser, so there's no app to install on the phone or table
   To use this function with Firefox, enable both `Use autoscrolling` and `Use smooth scrolling` in the Firefox settings (they're under `Browsing`, near the end of the `General` section). Then tap the `Smooth` button in the lower right in the app UI.
   
   Using this with Chrome is left as an exercise for the reader.
-  
-### Auto scrolling
+
+
+#### Auto scrolling
 
 - So we can now scroll smoothly through infinite feeds, but in our Quest for the Ultimate Doomscrolling Experience, having to keep a finger on the screen will get old quickly. So this app has mode where the mouse wheel scroll and browser smooth scroll modes (described above) can be toggled on.
 
@@ -65,7 +68,8 @@ Runs directly in the browser, so there's no app to install on the phone or table
 
 - If your computer seems to have a mind of its own and keeps scrolling things around the day after you used this function, your are advised to check to see if you forgot to turn the scrolling off :) 
 
-### Tips
+
+## Tips
 
 - Touches in the `Touch` and `Scroll` areas only have to start in the areas. They still register if the touch moves into another area.
 
@@ -77,11 +81,14 @@ Runs directly in the browser, so there's no app to install on the phone or table
 
 - Enter full screen mode by tapping the `Full` button. This issues a request for full screen to the browser. The request may be ignored, in which case the button will not cause any change. If full screen mode is activated, a swipe from the top or bottom of the screen will normally exit back to regular mode.
 
+
 ## Configuration
 
-The friction and sensitivity settings that control mouse pointer movement after releasing the screen are command line arguments. E.g.,:
+The friction and sensitivity settings that control mouse pointer movement after releasing the touch are command line arguments. E.g.,:
 
     - cargo run -- --friction 0.01 --sensitivity 0.1
+
+To have the mouse pointer stop immediately when the touch is released, set the friction to `1.0.`  
 
 Sensitivity for the other controls, and related settings can be modified by changing the `const` values in `web/settings.js`.
 
@@ -114,13 +121,16 @@ Sensitivity for the other controls, and related settings can be modified by chan
 
     - `WEB_SOCKET_TIMEOUT_MS`
 
+
 ## Host security considerations
 
 Anyone that can connect to the WebSocket that remote-mouse opens on the desktop PC can control the mouse. It's remotely conceivable that this could be used in an attack where the attacker guesses what's on the monitor (to determine where to click), or can see the monitor through a window, or just clicks randomly to break things. If this is of concern, access to the port should be restricted, for instance with firewall rules, or by setting remote-mouse to listen only on a localhost port, and accessing it via an SSH tunnel.
 
+
 ## Installation
 
-### Build on Linux
+
+#### Build on Linux
 
 This procedure has been tested on Linux Mint 19 and 20. It should work on recent Ubuntu and other Debian derivatives as well.
 
@@ -138,7 +148,9 @@ cd remote-mouse
 cargo run --release
 '
 ```
+
 * The link to use for connecting from the phone or tablet is printed to the shell.
+
 
 ## Permissions
 
@@ -157,7 +169,30 @@ END
 
 Reboot to activate.
 
+
 ## Technologies
 
 - `Rust`, `tokio`, `warp`, `enigo`, 
+
   [vh-check](https://github.com/Hiswe/vh-check), and the usual suspects, ES6, CSS, jQuery, and jQuery UI. 
+
+
+## Implementation notes
+
+#### Rounding errors
+
+Enigo, which wraps Xdo on Linux, supports both absolute and relative mouse pointer positioning. Both methods take integers, which describe positions with resolution of 1 pixel.
+
+The main drawback of absolute positioning is that the app has to detect (or the user has to provide), the resolution of the desktop. It also requires some slight workarounds due to the different resolutions and sizes of the desktop and touch screen. The issues aren't a big deal, but relative positioning seems like it's a better fit for this app.
+
+With relative positioning, we send a series of deltas describing the difference between the previous and current pointer positions. To get responsive and smooth operation, we send deltas at a fairly high frequency (120 per second by default), which means that the pointer often moves only a few pixels between each delta, often giving delta with values somewhere between -5 to +5 in each direction (x and y).
+ 
+Since these values are also integers describing full pixel movement, we are left without enough resolution to accurately move the mouse pointer by repeating just one delta.
+ 
+The delta is essentially a vector, describing both the direction and speed of the pointer. And, because the speed and direction are baked together into two integers, the resolution in specifying the direction becomes very low when the speed is low. For instance, using a delta of (1,1) (1 pixel down and one pixel to the right), causes the pointer to move at a 45 degree angle. The next possible angle is created by varying the value for one of the dimensions by one. E.g., by changing the delta to (2,1), which gives a 60 degree angle. So no angles between 45 and 60 degrees can be represented while also keeping mouse pointer speed the same. To represent other angles, both of the values in the delta would have to be increased, so as to provide a fraction between those lower ones. But that's not an option since it would speed up mouse pointer movement, and we need to speed of the movement to correspond with the speed at which the user wants to move the pointer.
+ 
+The lack of resolution is that the mouse pointer ends up looking like it's dropping into invisible tracks as it moves, where the tracks correspond to the few angles that can be achieved with very small delta values.
+
+So, in order to provide smooth movement at the speed the user wants, we need to use float values in the deltas. But Enigo takes only integers, and if we just round or truncate the floats before passing them on, we haven't gained anything.
+
+It turns out that all we need to do is keep track of the errors that we introduce by truncating the floats, and roll them back into the mouse position when they're large enough. Instead of throwing out the fractional parts of truncated values (which will be in the [0.0, 1.0) range), we add them to a running total. The total represents the total error we have introduced by truncating the floats so far. The total error is also the difference between the current actual position of the pointer and the position it would have been in, if sub-pixel positioning was supported. Each time we add another rounding error to the cumulative error value, we check if the value has become 1.0 or larger, which means that it has an integer part that we can now split out and send to Enigo. Sending the value to Enigo adjusts the pointer position, cancelling out the rounding errors. Just as a practicality, we don't send the integer parts of the cumulative errors to Enigo separately. Since we're doing the evaluation in the context of sending another delta to Enigo, we just add the integer parts to the delta on which we're working.

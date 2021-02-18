@@ -1,21 +1,23 @@
 #[allow(dead_code)]
+#[doc(inline)]
 #[macro_use]
 extern crate clap;
 #[macro_use]
 extern crate lazy_static;
 
+use std::{thread, time};
+use std::str;
+use std::sync::{Arc, Mutex, MutexGuard};
+
 use async_std::task;
 use clap::{App, Arg};
 use colored::*;
 use enigo::{Enigo, /* Key, KeyboardControllable,*/ MouseButton, MouseControllable};
-use float_extras::f64::modf;
 use float_extras;
+use float_extras::f64::modf;
 use futures::{future, StreamExt};
 use local_ipaddress;
 use public_ip::{BoxToResolver, dns, http, ToResolver};
-use std::str;
-use std::sync::{Arc, Mutex, MutexGuard};
-use std::{thread, time};
 use warp::Filter;
 use warp::http::header::{HeaderMap, HeaderValue};
 
@@ -113,12 +115,8 @@ async fn main() {
                     let mut mb = |action: &str, button: MouseButton| {
                         match action {
                             "click" => enigo.mouse_click(button),
-                            "down" => {
-                                enigo.mouse_down(button);
-                            }
-                            "up" => {
-                                enigo.mouse_up(button);
-                            }
+                            "down" => enigo.mouse_down(button),
+                            "up" => enigo.mouse_up(button),
                             _ => (),
                         };
                     };
@@ -145,8 +143,8 @@ async fn main() {
                             ttx.send((x, y)).unwrap();
                         }
                         "scroll" => {
-                            let iy = line_vec[1].parse::<i32>().unwrap();
-                            enigo.mouse_scroll_y(iy);
+                            let y = line_vec[1].parse::<f64>().unwrap();
+                            mouse_scroll_y_err(enigo, y);
                         }
                         "sleep" => {
                             let i = line_vec[1].parse::<u64>().unwrap();
@@ -173,25 +171,19 @@ async fn main() {
         let mut fx = 0.0;
         let mut fy = 0.0;
         let mut speed = 0.0;
-
         loop {
             let enigo = enigo.lock().unwrap();
             let result = rrx.try_recv();
             if result.is_ok() {
                 let (nx, ny) = result.unwrap();
-
                 fx = nx * pointer_sensitivity;
                 fy = ny * pointer_sensitivity;
-
                 speed = 1.0;
             }
-
             mouse_move_relative_err(enigo, fx * speed, fy * speed);
-
             if speed > 0.0 {
                 speed -= pointer_friction;
             }
-
             thread::sleep(ms);
         }
     });
@@ -206,39 +198,43 @@ async fn main() {
     warp::serve(routes).run(([0, 0, 0, 0], 7780)).await;
 }
 
-struct PointerErrorS {
+struct CumulativeError {
     x: f64,
     y: f64,
 }
 
 lazy_static! {
-    static ref PE: Mutex<PointerErrorS> = Mutex::new(PointerErrorS { x: 0.0, y: 0.0 });
+    static ref POINTER_ERROR: Mutex<CumulativeError> = Mutex::new(CumulativeError { x: 0.0, y: 0.0 });
 }
 
-// We use f64 floats, which we round to ints before passing to Enigo. We track the rounding errors
-// and, when the combined error reaches one pixel or more, we remove one pixel from the error and
-// apply it to the mouse pointer position. Without this, the mouse pointer will tend to drop into
-// "tracks" when moving.
-fn track_cumulative_error(mut err_v: f64, v: f64) -> (f64, i32) {
-    let (mut int, frac) = modf(v);
-    err_v += frac;
-    if err_v > 1.0 {
-        int += 1.0;
-        err_v -= 1.0;
-    } else if err_v < -1.0 {
-        int -= 1.0;
-        err_v += 1.0;
-    }
-    return (err_v, int as i32);
+lazy_static! {
+    static ref SCROLL_ERROR: Mutex<CumulativeError> = Mutex::new(CumulativeError { x: 0.0, y: 0.0 });
+}
+
+/// Truncate delta value {d} from f64 to i32 while tracking error.
+/// See the README for more info on the cumulative error.
+/// acc_err: Ref to the running total / cumulative error we have so far.
+/// d: delta x or y.
+fn track_cumulative_error(acc_err: f64, d: f64) -> (f64, i32) {
+    let (d_int, d_frac) = modf(d);
+    let (err_int, err_frac) = modf(acc_err + d_frac);
+    return (err_frac, (d_int + err_int) as i32);
 }
 
 fn mouse_move_relative_err(mut enigo: MutexGuard<Enigo>, x: f64, y: f64) -> () {
-    let mut pointer_error = PE.lock().unwrap();
+    let mut pointer_error = POINTER_ERROR.lock().unwrap();
     let (err_x_, int_x) = track_cumulative_error(pointer_error.x, x);
     pointer_error.x = err_x_;
     let (err_y_, int_y) = track_cumulative_error(pointer_error.y, y);
     pointer_error.y = err_y_;
     enigo.mouse_move_relative(int_x, int_y);
+}
+
+fn mouse_scroll_y_err(mut enigo: MutexGuard<Enigo>, y: f64) -> () {
+    let mut scroll_error = SCROLL_ERROR.lock().unwrap();
+    let (err_y_, int_y) = track_cumulative_error(scroll_error.y, y);
+    scroll_error.y = err_y_;
+    enigo.mouse_scroll_y(int_y);
 }
 
 fn get_public_network_addr() -> String {

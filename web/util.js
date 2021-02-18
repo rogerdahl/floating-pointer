@@ -53,20 +53,20 @@ export function get_properties(obj)
   let property_set = new Set();
   // Walk up the chain of prototypes.
   do {
-    let keys = Reflect.ownKeys(obj)
+    let keys = Reflect.ownKeys(obj);
     keys.forEach((k) => {
       property_set.add(k);
     });
   }
-  while (obj = Reflect.getPrototypeOf(obj));
+  while (obj = Reflect.getPrototypeOf(obj)); // jshint ignore:line
   return property_set;
 }
 
-// Get all properties belonging to, NOT inherited by the object.
+// Get all properties belonging directly to, NOT inherited by the object.
 export function get_direct_properties(obj)
 {
   let property_set = new Set();
-  let keys = Reflect.ownKeys(obj)
+  let keys = Reflect.ownKeys(obj);
   keys.forEach((k) => property_set.add(k));
   return property_set;
 }
@@ -74,10 +74,13 @@ export function get_direct_properties(obj)
 export function stop(ev)
 {
   ev.stopImmediatePropagation();
-  // ev.preventDefault();
-  // ev.stopPropagation()
-  // Returning false from an on() jQuery event handler calls event.stopPropagation() and event.preventDefault().
-  return false;
+  ev.stopPropagation();
+  if (ev.cancelable) {
+      ev.preventDefault();
+  }
+  // Returning false from an on() jQuery event handler calls event.stopPropagation() and
+  // event.preventDefault().
+  // return false;
 }
 
 // Wrap a method and limit the number of calls that get through to the method. The first
@@ -87,7 +90,7 @@ export function stop(ev)
 // through, then blocks again.
 export function rate_limiter(fn, limit_hz)
 {
-  let delay_ms = 1000 * (1 / limit_hz)
+  let delay_ms = 1000 * (1 / limit_hz);
   let is_blocked = false;
   let freq = new FrequencyCounter();
 
@@ -109,9 +112,6 @@ export function rate_limiter(fn, limit_hz)
 
 class FrequencyCounter
 {
-  start_ts;
-  event_count;
-
   constructor()
   {
     this.start_ts = Date.now();

@@ -10,21 +10,6 @@ real scroll wheel.
 In browser smooth scroll mode, the scroller just holds down the middle mouse button and moves the
 mouse pointer slightly up and down to adjust the scroll speed.
 
-
-Rounding errors
-
-The virtual mouse support on Linux moves the pointer in integer steps, corresponding to full pixels.
-The touch screens on phones and tablets provide positions in fractional (float) values. Since we
-have to round the floats to ints and can only move the pointer relatively and in integer / full
-pixel steps, this causes cumulative rounding errors. The errors manifest as the mouse pointer
-appearing to prefer to follow certain "tracks" while moving across the screen. The "tracks" appear
-where the x/y positions create fractions like 1/2, 1/3, 2/3, etc.
-
-To fix this, we use f64 floats, which we round to ints before passing to Enigo. We track the
-rounding errors and, when the combined error reaches one pixel or more, we remove one pixel from the
-error and apply it to the mouse pointer position.
-
-
 Update rate
 
 Checking which frequency to scroll at only once per event can be done with a simple loop that reads
@@ -53,9 +38,9 @@ export function register_event_handlers()
 
   $('#smooth-scroll-toggle').on('click', (ev) => {
     // alert(1);
-    scroll.smooth_toggle = !scroll.smooth_toggle;
-    $(ev.currentTarget).toggleClass('highlight', scroll.smooth_toggle);
-    if (scroll.smooth_toggle) {
+    state.smooth_toggle = !state.smooth_toggle;
+    $(ev.currentTarget).toggleClass('highlight', state.smooth_toggle);
+    if (state.smooth_toggle) {
       log.status('Using browser smooth scrolling');
     }
     else {
@@ -80,41 +65,43 @@ export function register_event_handlers()
 }
 
 // State vars for scrolling.
-const scroll = {
+const state = {
   smooth_toggle: false
-}
+};
 
 function reset_scroll()
 {
 
-  console.assert(scroll.interval_handle == null)
+  console.assert(state.interval_handle == null);
   // - For wheel scroll, dy is the distance between starting and ending touch positions.
   // - For smooth scroll, dy is the distance between starting and ending mouse cursor position on
   // the desktop machine.
-  scroll.dy = 0;
+  state.dy = 0;
   // A copy of dy from the previous event. dy is the distance between the point where the touch
   // started and where the touch currently is. It represents how far the touch has been dragged and,
   // together with a couple of constants for the settings, decide the scroll speed.
-  scroll.last_dy = 0;
+  state.last_dy = 0;
   // Distance between start point and current point of the mouse pointer on the desktop machine.
   // This can be different from the distance on the tablet due to the cumulative rounding errors
   // described in the header.
-  scroll.desktop_dy = 0;
+  state.desktop_dy = 0;
   // true = Manual scrolling is active and the scroll speed indicator is showing.
-  scroll.active = false;
+  state.active = false;
   // indicated with the scroll.active and scroll.auto flags.
   // true = Smooth or wheel based auto-scroll is going. The scroll speed indicator is showing and is
   // highlighted.
-  scroll.smooth = false
+  state.smooth = false;
   // true = The "Smooth" button has been toggled on ; but we may not actually be scrolling. That's
   // scroll.smooth_toggle = false;
-  scroll.auto = false;
+  state.auto = false;
   // Handle for the wheel scroll interval timer
-  scroll.interval_handle = null;
+  state.interval_handle = null;
   // Point in time when the most recent mouse wheel scroll event ws triggered
-  scroll.interval_start_ts = null;
+  state.interval_start_ts = null;
   // Scroll speed recorded at last move event.
 }
+
+reset_scroll();
 
 // End state of previous regular scroll. Used when starting auto scroll.
 const last_scroll = {
@@ -123,7 +110,8 @@ const last_scroll = {
   // dy==null indicates that auto scroll is not available, as a regular scroll has
   // not yet been done.
   dy: null,
-}
+};
+
 
 const scroll_el = $('#scroll');
 
@@ -137,23 +125,23 @@ function handle_touch_start(ev)
   // TODO: Cant do stop_all() here since it wipes out info about what the previous
   // state was, which we need in order to determine the next step.
   // stop_all(ev)
-  scroll.dy = 0;
-  scroll.last_dy = 0;
-  scroll.smooth = scroll.smooth_toggle;
-  if (scroll.smooth) {
+  state.dy = 0;
+  state.last_dy = 0;
+  state.smooth = state.smooth_toggle;
+  if (state.smooth) {
     start_smooth(ev);
   }
   else {
     start_wheel(ev);
   }
-  scroll.active = true;
+  state.active = true;
   sync_indicator(ev);
 }
 
-function start_smooth(ev)
+function start_smooth(_ev)
 {
   middle_up_down('down');
-  scroll.desktop_dy = 0;
+  state.desktop_dy = 0;
 }
 
 function start_wheel(ev)
@@ -165,45 +153,47 @@ function start_auto(ev)
 {
   log.debug(ev, 'Starting auto-scroll');
   log.debug(
-      ev, `scroll auto=${scroll.auto} smooth=${scroll.smooth} dy=${scroll.dy} `
+      ev, `scroll auto=${state.auto} smooth=${state.smooth} dy=${state.dy} `
   );
-  if (scroll.smooth) {
+  if (state.smooth) {
     middle_up_down('down');
-    ws.send('touch', 0, scroll.dy.toFixed(3));
+    ws.send('touch', 0, state.dy.toFixed(3));
   }
   else {
     start_wheel(ev);
   }
-  scroll.active = true;
+  state.active = true;
   sync_indicator(ev);
 }
 
 function handle_touch_end(ev)
 {
   let is_tap = touch.is_tap(ev);
-  // Tap when not auto scrolling starts auto.
-  if (is_tap && !scroll.auto && last_scroll.dy != null) {
-    log.debug(`touch_end(): starting auto`);
+  // Tap when not auto scrolling starts auto, using previously captured scroll values..
+  if (is_tap && !state.auto && last_scroll.dy != null) {
+    log.debug(`touch_end(): start auto`);
     stop_all(ev);
-    scroll.auto = true;
-    scroll.smooth = last_scroll.smooth;
-    scroll.dy = last_scroll.dy;
+    state.auto = true;
+    state.smooth = last_scroll.smooth;
+    state.dy = last_scroll.dy;
     start_auto(ev);
   }
-  // Tap when auto scrolling stops and preserves settings.
+  // Tap when auto scrolling just stops scrolling. Scroll values are already captured.
   else if (is_tap) {
-    log.debug(`touch_end(): stop and preserve`);
+    log.debug(`touch_end(): stop only`);
     stop_all(ev);
   }
-  // Anything else just records the current scroll values and stops scrolling.
+  // Release after drag stops scrolling and captures the scroll values that were in use at the time
+  // of release.
   else {
+    log.debug(`touch_end(): stop and capture`);
     last_scroll.auto = false; // scroll.auto;
-    last_scroll.smooth = scroll.smooth;
-    if (scroll.smooth) {
-      last_scroll.dy = scroll.desktop_dy;
+    last_scroll.smooth = state.smooth;
+    if (state.smooth) {
+      last_scroll.dy = state.desktop_dy;
     }
     else {
-      last_scroll.dy = scroll.dy;
+      last_scroll.dy = state.dy;
     }
     stop_all(ev);
   }
@@ -213,7 +203,7 @@ function handle_touch_end(ev)
 
 export function stop_all(ev)
 {
-  log.debug('stop_all()')
+  // log.debug('stop_all()');
   stop_smooth(ev);
   stop_wheel(ev);
   reset_scroll();
@@ -222,9 +212,9 @@ export function stop_all(ev)
 
 function stop_smooth(ev)
 {
-  if (scroll.smooth) {// && scroll.active) {
+  if (state.smooth) {// && scroll.active) {
     middle_up_down('up');
-    ws.send('touch', 0, -scroll.desktop_dy.toFixed());
+    ws.send('touch', 0, -state.desktop_dy.toFixed());
     log.debug(ev, 'Released middle mouse button');
     log.debug(ev, 'Stopped smooth scroll');
   }
@@ -232,7 +222,7 @@ function stop_smooth(ev)
 
 function stop_wheel(ev)
 {
-  if (!scroll.smooth && scroll.active) {
+  if (!state.smooth && state.active) {
     stop_interval_timer(ev);
     log.debug('Stopped wheel scroll');
   }
@@ -240,52 +230,52 @@ function stop_wheel(ev)
 
 function handle_touch_move(ev)
 {
-  log.debug(ev, 'handle_touch_move()');
+  // log.debug(ev, 'handle_touch_move()');
 
-  scroll.speed = get_scroll_speed(ev)
-  scroll.dy = touch.get_delta(ev).y;
+  state.speed = get_scroll_speed(ev);
+  state.dy = touch.get_delta(ev).y;
 
-  if (scroll.smooth) {
-    const int_dy = (scroll.dy - scroll.last_dy) * Math.abs(scroll.speed);
+  if (state.smooth) {
+    const int_dy = (state.dy - state.last_dy) * Math.abs(state.speed);
     ws.send('touch', 0, int_dy.toFixed());
-    scroll.desktop_dy += int_dy;
+    state.desktop_dy += int_dy;
   }
   else {
   }
   sync_indicator(ev);
-  scroll.last_dy = scroll.dy;
+  state.last_dy = state.dy;
 }
 
-function start_interval_timer(ev)
+function start_interval_timer(_ev)
 {
-  if (scroll.interval_handle) {
+  if (state.interval_handle) {
     return;
   }
-  scroll.interval_start_ts = Date.now();
-  scroll.interval_handle = setInterval(handle_interval_timer, settings.SCROLL_INTERVAL_MS);
+  state.interval_start_ts = Date.now();
+  state.interval_handle = setInterval(handle_interval_timer, settings.SCROLL_INTERVAL_MS);
 }
 
 function handle_interval_timer()
 {
-  if ((Date.now() - scroll.interval_start_ts) / 1000 >= (1.0 / Math.abs(scroll.speed))) {
-    ws.send('scroll', Math.sign(scroll.speed));
-    scroll.interval_start_ts = Date.now();
+  if ((Date.now() - state.interval_start_ts) / 1000 >= (1.0 / Math.abs(state.speed))) {
+    ws.send('scroll', Math.sign(state.speed));
+    state.interval_start_ts = Date.now();
   }
 }
 
-function stop_interval_timer(ev)
+function stop_interval_timer(_ev)
 {
-  if (!scroll.interval_handle) {
+  if (!state.interval_handle) {
     return;
   }
-  clearInterval(scroll.interval_handle);
-  scroll.interval_handle = null;
+  clearInterval(state.interval_handle);
+  state.interval_handle = null;
   log.debug('Stopped interval timer');
 }
 
 function get_scroll_speed(ev)
 {
-  if (scroll.smooth) {
+  if (state.smooth) {
     return get_smooth_scroll_speed(ev);
   }
   else {
@@ -295,27 +285,28 @@ function get_scroll_speed(ev)
 
 // For browser scroll, the scroll speed is determined by how far the mouse pointer has
 // moved from the point where the middle mouse click started, on the desktop.
-function get_smooth_scroll_speed(ev)
+function get_smooth_scroll_speed(_ev)
 {
-  return scroll.dy * settings.SMOOTH_SCROLL_SENSITIVITY;
+  return state.dy * settings.SMOOTH_SCROLL_SENSITIVITY;
 }
 
 // For wheel scroll, the scroll speed is determined by how far the touch has moved on
 // the tablet touch screen.
-function get_wheel_scroll_speed(ev)
+function get_wheel_scroll_speed(_ev)
 {
-  return scroll.dy * settings.WHEEL_SCROLL_SENSITIVITY;
+  return state.dy * settings.WHEEL_SCROLL_SENSITIVITY;
 }
 
 function sync_indicator(ev)
 {
-  log.debug(ev, `sync_indicator()`);
+  log.debug(`active=${state.active} auto=${state.auto}`);
+  // log.debug(ev, `sync_indicator()`);
   const left = scroll_el.offset().left;
   const tip_el = $('#scroll-tip');
   tip_el
       .text(format_speed(ev))
-      .toggleClass('visible', scroll.active || scroll.auto)
-      .toggleClass('highlight', scroll.auto)
+      .toggleClass('visible', state.active || state.auto)
+      .toggleClass('highlight', state.auto)
       .css('top', `${touch.get_pos_time(ev).y - tip_el.outerHeight()}px`)
       .css('left', `${left - tip_el.outerWidth()}px`);
 }
@@ -325,7 +316,7 @@ function format_speed(ev)
   const speed_float = get_scroll_speed(ev);
   return `${speed_float < 0 ? '\u25b2' : '\u25bc'} ` +
       `${Math.abs(speed_float).toFixed(2)}` +
-      `${(scroll.smooth ? '' : 'Hz')}`;
+      `${(state.smooth ? '' : 'Hz')}`;
 }
 
 // In Firefox, auto scroll is toggled on and off with middle mouse button clicks, or toggled on

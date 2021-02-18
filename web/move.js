@@ -25,20 +25,11 @@ export function register_event_handlers()
       }, 120))
       .on('mousemove touchmove', util.rate_limiter((ev) => {
         // Ignore mousemove (hover) events unless mouse button is down.
-        if (!touch.is_active(ev)) {
-          return; // true;
+        if (touch.is_active(ev)) {
+          handle_touch_move(ev);
         }
-        handle_touch_move(ev);
         return util.stop(ev);
       }, settings.MOUSE_MOVE_RATE_LIMIT_HZ))
-  // .on('mousemove touchmove', util.limit_event_rate((ev) => {
-  //   // Ignore mousemove (hover) events unless mouse button is down.
-  //   if (!touch.is_active(ev)) {
-  //     return; // true;
-  //   }
-  //   handle_touch_move(ev);
-  //   return util.stop(ev);
-  // }, settings.MOUSE_MOVE_RATE_LIMIT_HZ))
   ;
 }
 
@@ -46,26 +37,12 @@ export function register_event_handlers()
 
 function handle_move_start(ev)
 {
-  log.debug(ev, '-----------------');
-
-  log.debug(ev, 'handle_move_start()');
   // Start coordinates for this touch have been captured by the touch tracker.
-
+  log.debug(ev, 'handle_move_start()');
   scroll.stop_all(ev);
-
   last_moves = [];
-  // if (smooth_toggle) {
-  //     start_browser_smooth();
-  // } else {
-  //     start_interval_timer(ev);
-  // }
-  // scroll.active = true;
-  // // scroll.auto_active = false;
-  // // adjust_scroll_speed(ev);
-  // sync_indicator(ev, 0);
   const abs_pos = touch.get_pos_time(ev, 'move');
   last_moves.push(abs_pos);
-
 }
 
 let last_moves = [];
@@ -104,7 +81,7 @@ function handle_move_end(ev)
 
 function handle_touch_move(ev)
 {
-  log.debug(ev, 'handle_touch_move()');
+  // log.debug(ev, 'handle_touch_move()');
   const rel_pos = touch.get_delta(ev, 'move');
   ws.send('touch',
       (rel_pos.x * settings.TOUCH_MOVE_SENSITIVITY).toFixed(3),

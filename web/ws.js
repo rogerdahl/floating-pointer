@@ -76,23 +76,23 @@ function create_socket(host, port, connection_name)
     }
     const timeout_handle = setTimeout(create_socket, 1000, host, port, connection_name);
     g_socket_map.set(k, timeout_handle);
-  }
+  };
   s.is_ready = () => {
     return s.readyState === 1;
-  }
+  };
   s.onopen = () => {
     log.status(`Status: Connected to ${location.host}`);
   };
   s.onmessage = (ev) => {
     log.status(`Status: Message from host: ${ev.data}`);
-  }
+  };
   s.onclose = () => {
     log.status(`Status: Attempting to reconnect to ${host}...`);
     s.wait_then_create();
-  }
+  };
   s.onerror = (ev) => {
     log.status(`Status: WebSocket error: ${ev.message}`);
     s.wait_then_create();
-  }
+  };
   return s;
 }

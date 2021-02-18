@@ -27,7 +27,7 @@ export function register_event_handlers()
         return util.stop(ev);
       })
       .on('mousemove touchmove', (ev) => {
-        handle_touch_move(ev)
+        handle_touch_move(ev);
         return util.stop(ev);
       })
   ;
@@ -35,14 +35,16 @@ export function register_event_handlers()
   // Left-click with tap in the Move area.
   if (settings.TOUCH_LEFT_CLICK) {
     $('#move')
-        .on('mouseup touchend touchcancel', (ev) => {
+        // .on('mouseup touchend touchcancel', (ev) => {
+        .on('touchend', (ev) => {
           if (touch.is_tap(ev)) {
             handle_touch_start(ev, 'left');
             handle_touch_end(ev);
+            return util.stop(ev);
           }
-          // return util.stop(ev);
         });
   }
+
   for (let name of ['left', 'middle', 'right']) {
     g_dict[name] = {name: name, hold: false, toggle: false, hold_timer: null};
   }
@@ -57,7 +59,7 @@ function handle_touch_start(ev, name)
 {
   log.debug(ev, 'handle_touch_start()');
   if (g_state !== null) {
-    handle_touch_end(ev)
+    handle_touch_end(ev);
   }
   g_state = g_dict[name];
   // We want the mouse toggle to occur while the touch is being held, so the method we use

@@ -6,9 +6,8 @@
 // Sensitivity settings. Input values are multiplied with these before they're used.
 // Higher values are more sensitive (less movement is required on the touchpad).
 export const TOUCH_MOVE_SENSITIVITY = 2.0;
-export const WHEEL_SCROLL_SENSITIVITY = 0.06;
-export const SMOOTH_SCROLL_SENSITIVITY = 0.003;
-
+export const WHEEL_SCROLL_SENSITIVITY = 0.04;
+export const SMOOTH_SCROLL_SENSITIVITY = 0.03;
 
 // Tap / hold / swipe durations (time and radius)
 export const TAP_DURATION_MS = 300;

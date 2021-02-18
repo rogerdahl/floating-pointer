@@ -40,25 +40,28 @@ export function register_end_handler()
 
 export function is_active(ev)
 {
+  assert_ev(ev);
   const is_active_ = touch_map.size > 0;
-  log.debug(ev, `is_active() -> ${is_active_}`);
+  // log.debug(ev, `is_active() -> ${is_active_}`);
   return is_active_;
 }
 
 export function get_distance(ev, delta_key = '')
 {
+  assert_ev(ev);
   let delta_pos = get_delta(ev, delta_key);
   return Math.sqrt(Math.pow(delta_pos.x, 2) + Math.pow(delta_pos.y, 2));
 }
 
 export function get_start_pos(ev)
 {
+  assert_ev(ev);
   if (!touch_map.has('')) {
     log.debug(ev, 'Start of touch has not been registered (mouse hover in browser?)');
     touch_map.set('', get_pos_time(ev));
   }
   const p = touch_map.get('');
-  log.debug(`get_start_pos() '' -> ${p}`);
+  // log.debug(`get_start_pos() '' -> ${p}`);
   return p;
 }
 
@@ -71,7 +74,8 @@ export function get_start_pos(ev)
 */
 export function get_delta(ev, delta_key = '')
 {
-  log.debug(ev, `get_delta() delta_key=${delta_key}`)
+  // log.debug(ev, `get_delta() delta_key=${delta_key}`)
+  assert_ev(ev);
   let prev_pos = touch_map.has(delta_key) ? touch_map.get(delta_key) : get_start_pos(ev);
   let cur_pos = get_pos_time(ev);
   // log.debug(ev, `get_delta() prev_pos=${prev_pos}, cur_pos=${cur_pos}`);
@@ -81,37 +85,42 @@ export function get_delta(ev, delta_key = '')
   if (delta_key !== '') {
     touch_map.set(delta_key, cur_pos);
   }
-  log.debug(ev, `get_delta() ${delta_key} -> ${delta_pos}`);
+  // log.debug(ev, `get_delta() ${delta_key} -> ${delta_pos}`);
   return delta_pos;
 }
 
 export function is_within_tap_radius(ev, delta_key = '')
 {
+  assert_ev(ev);
   const is_within_tap_radius = get_distance(ev, delta_key) < settings.TAP_RADIUS_PIXELS;
-  log.debug(ev, `is_within_tap_radius() -> ${is_within_tap_radius}`);
+  // log.debug(ev, `is_within_tap_radius() -> ${is_within_tap_radius}`);
   return is_within_tap_radius;
 }
 
 export function is_short_touch(ev, delta_key = '')
 {
+  assert_ev(ev);
   const delta_pos = get_delta(ev, delta_key);
   const is_within_tap_duration = delta_pos.ts < settings.TAP_DURATION_MS;
-  log.debug(ev, `is_within_tap_duration() -> ${is_within_tap_duration}`);
+  // log.debug(ev, `is_within_tap_duration() -> ${is_within_tap_duration}`);
   return is_within_tap_duration;
 }
 
 export function is_long_touch(ev, delta_key = '')
 {
+  assert_ev(ev);
   return !is_short_touch(ev, delta_key);
 }
 
 export function is_tap(ev, delta_key)
 {
+  assert_ev(ev);
   return is_within_tap_radius(ev, delta_key) && is_short_touch(ev, delta_key);
 }
 
 export function is_hold(ev, delta_key)
 {
+  assert_ev(ev);
   return is_within_tap_radius(ev, delta_key) && is_long_touch(ev, delta_key);
 }
 
@@ -124,7 +133,7 @@ class PosTime
     this.x = x;
     this.y = y;
     this.ts = ts;
-    log.debug('PosTime:', this.toJSON());
+    // log.debug('PosTime:', this.toJSON());
   }
 
   get [Symbol.toStringTag]()
@@ -155,9 +164,9 @@ function handle_global_end(ev)
 
 export function get_pos_time(ev)
 {
-  log.debug(ev, 'get_pos_time()');
+  // log.debug(ev, 'get_pos_time()');
   // log.dump_obj_properties('get_pos_time() ev', ev);
-  log.assert(typeof ev.type != 'undefined');
+  assert_ev(ev);
   if (ev.type === 'touchstart') {
     const t = ev.targetTouches[0];
     return new PosTime(t.clientX, t.clientY);
@@ -171,7 +180,7 @@ export function get_pos_time(ev)
     return new PosTime(t.clientX, t.clientY);
   }
   else {
-    log.debug(ev, `Received a mouse event: ${ev.type}`);
+    // log.debug(ev, `Received a mouse event: ${ev.type}`);
     return new PosTime(ev.clientX, ev.clientY);
   }
 }
@@ -190,3 +199,12 @@ function is_currently_touched_element(ev)
   const touched_el = document.elementFromPoint(pos.x, pos.y);
   return ev.currentTarget === touched_el;
 }
+
+function assert_ev(ev)
+{
+  log.assert(
+      (typeof ev.type !== 'undefined'),
+      `'ev' is missing or wrong object (see call stack)`
+  );
+}
+
