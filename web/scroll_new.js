@@ -28,8 +28,7 @@ import * as log from './log.js';
 
 // Exported
 
-export function register_event_handlers()
-{
+export function register_event_handlers() {
   $('#smooth-scroll-toggle').on('click', (ev) => {
     state.smooth_toggle = !state.smooth_toggle;
     $(ev.currentTarget).toggleClass('highlight', state.smooth_toggle);
@@ -39,19 +38,21 @@ export function register_event_handlers()
   });
 
   scroll_el
-      .on('mousedown touchstart', (ev) => {
-        handle_touch_start(ev);
-        return util.stop(ev);
-      })
-      .on('mouseup touchend', (ev) => {
-        handle_touch_end(ev);
-        return util.stop(ev);
-      })
-      .on('mousemove touchmove', util.rate_limiter((ev) => {
+    .on('mousedown touchstart', (ev) => {
+      handle_touch_start(ev);
+      return util.stop(ev);
+    })
+    .on('mouseup touchend', (ev) => {
+      handle_touch_end(ev);
+      return util.stop(ev);
+    })
+    .on(
+      'mousemove touchmove',
+      util.rate_limiter((ev) => {
         handle_touch_move(ev);
         return util.stop(ev);
-      }, settings.SCROLL_MOVE_RATE_LIMIT_HZ))
-  ;
+      }, settings.SCROLL_MOVE_RATE_LIMIT_HZ)
+    );
 }
 
 // State vars for scrolling.
@@ -73,14 +74,12 @@ const tip_el = $('#scroll-tip');
 // When we handle touch_start, we don't yet know if the touch will be a touch or a tap.
 // We start out handling it as a touch. At touch_end, we determine if it was a touch
 // or a tap, and, on tap, start auto scrolling.
-function handle_touch_start(ev)
-{
+function handle_touch_start(ev) {
   log.debug('handle_touch_start()');
   start(ev);
 }
 
-function handle_touch_end(ev)
-{
+function handle_touch_end(ev) {
   log.debug('handle_touch_end()');
 
   let is_tap = touch.is_tap(ev);
@@ -95,21 +94,18 @@ function handle_touch_end(ev)
     if (is_auto) {
       log.debug('- tap & auto');
       // Tap when already auto scrolling: Stop the scrolling (which we did already)
-    }
-    else {
+    } else {
       // Tap when not auto scrolling: User wants to start auto
       if (state.last_dy == null) {
         // Tap with no previous scroll setting: Ignore attempt to start auto.
         log.debug('- tap, no prev scroll');
-      }
-      else {
+      } else {
         // Tap with previous scroll recorded: Start auto
         log.debug('- tap, with prev scroll');
         start_auto(ev);
       }
     }
-  }
-  else {
+  } else {
     log.debug('- hold, recording current');
     // Touch was a hold. Record the scroll settings.
     state.last_y = y;
@@ -120,16 +116,14 @@ function handle_touch_end(ev)
   sync_indicator();
 }
 
-function handle_touch_move(ev)
-{
+function handle_touch_move(ev) {
   sync_touch(ev);
   sync_indicator();
 }
 
 ////
 
-function start(ev)
-{
+function start(ev) {
   log.debug('start()');
   start_interval_timer();
   state.active = true;
@@ -137,8 +131,7 @@ function start(ev)
   sync_indicator();
 }
 
-function start_auto(ev)
-{
+function start_auto(ev) {
   log.debug('start_auto()');
   start(ev);
   state.auto = true;
@@ -147,8 +140,7 @@ function start_auto(ev)
   sync_indicator();
 }
 
-export function stop()
-{
+export function stop() {
   log.debug('stop()');
   stop_interval_timer();
   state.auto = false;
@@ -158,25 +150,23 @@ export function stop()
   sync_indicator();
 }
 
-function sync_touch(ev)
-{
+function sync_touch(ev) {
   log.debug('sync_touch()');
   state.y = touch.get_pos_time(ev).y;
   state.dy = touch.get_delta(ev).y;
 }
 
-function start_interval_timer()
-{
+function start_interval_timer() {
   if (!state.interval_handle) {
     log.debug('start_interval_timer()');
     state.interval_handle = setInterval(
-        handle_interval_timer, settings.SCROLL_INTERVAL_MS
+      handle_interval_timer,
+      settings.SCROLL_INTERVAL_MS
     );
   }
 }
 
-function stop_interval_timer()
-{
+function stop_interval_timer() {
   if (state.interval_handle) {
     log.debug('stop_interval_timer()');
     clearInterval(state.interval_handle);
@@ -184,32 +174,30 @@ function stop_interval_timer()
   }
 }
 
-function handle_interval_timer()
-{
+function handle_interval_timer() {
   let speed = get_scroll_speed();
   log.info(`scroll ${speed}`);
   ws.send('scroll', speed.toFixed(3));
 }
 
-function get_scroll_speed()
-{
+function get_scroll_speed() {
   return state.dy * settings.WHEEL_SCROLL_SENSITIVITY;
 }
 
-function sync_indicator()
-{
+function sync_indicator() {
   const left = scroll_el.offset().left;
   tip_el
-      .text(format_speed())
-      .toggleClass('visible', state.active || state.auto)
-      .toggleClass('highlight', state.auto)
-      .css('top', `${state.y - tip_el.outerHeight()}px`)
-      .css('left', `${left - tip_el.outerWidth()}px`);
+    .text(format_speed())
+    .toggleClass('visible', state.active || state.auto)
+    .toggleClass('highlight', state.auto)
+    .css('top', `${state.y - tip_el.outerHeight()}px`)
+    .css('left', `${left - tip_el.outerWidth()}px`);
 }
 
-function format_speed()
-{
+function format_speed() {
   const speed_float = get_scroll_speed();
-  return `${speed_float < 0 ? '\u25b2' : '\u25bc'} ` +
-      `${Math.abs(speed_float).toFixed(2)} Hz`;
+  return (
+    `${speed_float < 0 ? '\u25b2' : '\u25bc'} ` +
+    `${Math.abs(speed_float).toFixed(2)} Hz`
+  );
 }

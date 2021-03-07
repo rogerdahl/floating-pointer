@@ -27,10 +27,10 @@ body {
 
     /*white-space: nowrap;*/
     /*word-break: break-all;*/
-
     overscroll-behavior: contain;
 }
 
+/*noinspection ALL*/
 .grid {
     /* Top level grid containing the main UI elements */
     display: grid;
@@ -47,10 +47,10 @@ body {
     grid-template-columns: [col] 40vw [col] 20vw [col] 25vw [col] 15vw;
 
     grid-template-rows:
-            [row] calc(var(--vh-offset, 1vh) * 15)
-            [row] calc(var(--vh-offset, 1vh) * 65)
-            [row] calc(var(--vh-offset, 1vh) * 10)
-            [row] calc(var(--vh-offset, 1vh) * 10);
+        [row] calc(var(--vh-offset, 1vh) * 15)
+        [row] calc(var(--vh-offset, 1vh) * 75)
+        [row] calc(var(--vh-offset, 1vh) * 5)
+        [row] calc(var(--vh-offset, 1vh) * 5);
 }
 
 .rounded-box {
@@ -101,10 +101,10 @@ body {
     filter: brightness(75%);
 }
 
-#scroll-title {
-    /*     align-self: center; */
-    /*     padding: 1rem 0 0 0; */
-}
+/*#scroll-title {*/
+/*    align-self: center;*/
+/*    padding: 1rem 0 0 0;*/
+/*}*/
 
 #right {
     grid-column: span 2
@@ -147,10 +147,6 @@ body {
     filter: brightness(50%);
 }
 
-.button-touch {
-    filter: brightness(50%);
-}
-
 #scroll-tip {
     position: absolute;
     display: none;
@@ -179,4 +175,24 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
+    /* Mouse and touch events pass-through  */
+    pointer-events: none;
+}
+
+/* Small button */
+
+.small-button {
+    text-align: center;
+    margin: .3rem .4rem .4rem .3rem;
+    border-radius: 0.8rem;
+    border-width: 3px;
+}
+
+.smooth-highlight {
+    color: #a0ffff;
+    /*color: #5959d8;*/
+}
+
+.touch-indicated:active {
+    filter:brightness(50%);
 }

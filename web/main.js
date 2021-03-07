@@ -9,7 +9,7 @@ import * as touch from './touch.js';
 import * as ws from './ws.js';
 import * as log from './log.js';
 
-$(document).ready(_ev => {
+$(document).ready((_ev) => {
   // alert('ready');
   log.register_global_error_handler();
   ws.connect();
@@ -23,12 +23,11 @@ $(document).ready(_ev => {
     // throw Error('TEST ERROR HANDLER');
     const grid_el = $('#full')[0];
     if (!document.fullscreenElement) {
-      grid_el.requestFullscreen().catch(err => {
+      grid_el.requestFullscreen().catch((err) => {
         alert(`Unable to enter full screen mode: ${err.message} (${err.name})`);
       });
-    }
-    else {
-      document.exitFullscreen().catch(err => {
+    } else {
+      document.exitFullscreen().catch((err) => {
         alert(`Unable to exit full screen: ${err.message} (${err.name})`);
       });
     }
@@ -43,11 +42,13 @@ $(document).ready(_ev => {
     const full_el = $('#full-screen');
     full_el.toggleClass('highlight', document.fullscreenElement);
     if (document.fullscreenElement) {
-      log.debug(ev, `Element: ${document.fullscreenElement.id} entered full-screen mode`);
+      log.debug(
+        ev,
+        `Element: ${document.fullscreenElement.id} entered full-screen mode`
+      );
       view_height = grid_el.style.getPropertyValue('--vh-offset');
       grid_el.style.setProperty('--vh-offset', window.test.value);
-    }
-    else {
+    } else {
       console.log('Leaving full-screen mode');
       grid_el.style.setProperty('--vh-offset', view_height);
     }

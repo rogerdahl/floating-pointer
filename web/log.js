@@ -6,73 +6,64 @@ import * as settings from './settings.js';
 import * as util from './util.js';
 import * as ws from './ws.js';
 
-export function status(status_str)
-{
+export function status(status_str) {
   $('#status').text(status_str);
 }
 
-export function debug(...obj_list)
-{
+export function debug(...obj_list) {
   return log(obj_list, 'log-debug', settings.LogLevel.DEBUG);
 }
 
-export function info(...obj_list)
-{
+export function info(...obj_list) {
   return log(obj_list, 'log.debug', settings.LogLevel.INFO);
 }
 
-export function warning(...obj_list)
-{
+export function warning(...obj_list) {
   return log(obj_list, 'log-warning', settings.LogLevel.WARNING);
 }
 
-export function error(...obj_list)
-{
+export function error(...obj_list) {
   // alert(obj_list_to_str(obj_list));
   return log(obj_list, 'log-error', settings.LogLevel.ERROR);
 }
 
-export function critical(...obj_list)
-{
+export function critical(...obj_list) {
   return log(obj_list, 'log-critical', settings.LogLevel.CRITICAL);
 }
 
-export function cmd_sent(...obj_list)
-{
+export function cmd_sent(...obj_list) {
   if (obj_list[0][0] === '#') {
     return;
   }
-  return log(obj_list, 'log-cmd', settings.LogLevel.DEBUG,
-      '->', true
-  );
+  return log(obj_list, 'log-cmd', settings.LogLevel.INFO, '->', true);
 }
 
-export function dump_obj(obj_name, obj)
-{
-  debug(`${obj_name}:`)
+export function dump_obj(obj_name, obj) {
+  debug(`${obj_name}:`);
   if (obj instanceof Map) {
     debug(`Map (${obj.size}):`);
     for (let [k, v] of obj.entries()) {
-      debug('- ', {k: k, v: v});
+      debug('- ', {
+        k: k,
+        v: v,
+      });
     }
   }
   if (util.is_iterable(obj)) {
     for (let prop of obj) {
-      debug(`  ${prop}:`, obj[prop])
+      debug(`  ${prop}:`, obj[prop]);
     }
-  }
-  else {
+  } else {
     for (let prop in obj) {
       if (obj.hasOwnProperty(prop)) {
-        debug(`  ${prop}:`, obj[prop])
+        debug(`  ${prop}:`, obj[prop]);
       }
     }
   }
 }
 
-export function dump_obj_properties(var_name, obj)
-{
-  debug(`'${var_name}' method names:`)
+export function dump_obj_properties(var_name, obj) {
+  debug(`'${var_name}' method names:`);
   let m_list = [];
   for (const n of util.get_properties(obj)) {
     m_list.push([_str(n), _str(obj[n])]);
@@ -83,23 +74,13 @@ export function dump_obj_properties(var_name, obj)
 }
 
 // This also captures failed console.assert().
-export function register_global_error_handler()
-{
+export function register_global_error_handler() {
   console.log('register_global_error_handler()');
-  window.onerror = function (
-      msg,
-      url,
-      line_no,
-      column_no,
-      error_obj
-  ) {
+  window.onerror = function (msg, url, line_no, column_no, error_obj) {
     if (msg.toLowerCase().indexOf('script error') > -1) {
-      alert(
-          `Error: A Cross-Origin / CORS error occurred. To prevent leaking information, the error details are 
-                only available in the browser console.`
-      );
-    }
-    else {
+      alert(`Error: A Cross-Origin / CORS error occurred. To prevent leaking information, the error details are 
+                only available in the browser console.`);
+    } else {
       let error_list = [
         `UNHANDLED EXCEPTION:`,
         `Message: ${msg}`,
@@ -111,7 +92,7 @@ export function register_global_error_handler()
       // Sadly, the stack trace is made available only as a block of text. I'd have liked to process it a bit more
       // before display, but there isn't much we can safely assume regarding the contents. So this just splits it
       // into lines, so that it can be processed like other messages we generate.
-      let frame_count = 0
+      let frame_count = 0;
       for (let frame_line of error_obj.stack.split('\n')) {
         error_list.push(`- ${frame_line}`);
         if (++frame_count === 10) {
@@ -130,18 +111,15 @@ export function register_global_error_handler()
 // - The browser console
 // - The host (where it's dumped to the shell)
 // - The client UI (where it appears in the main touch input area)
-function log(obj_list, msg_class, log_level, prefix_str = null, skip_ws = false)
-{
+function log(obj_list, msg_class, log_level, prefix_str = null, skip_ws = false) {
   if (log_level < settings.LOG_LEVEL) {
     return;
   }
-  let msg_str = (
-      `${prefix_str ? prefix_str : `${LOG_LEVEL_TO_NAME.get(log_level)}:`} ` +
-      `${obj_list_to_str(obj_list)}`
-  );
+  let msg_str =
+    `${prefix_str ? prefix_str : `${LOG_LEVEL_TO_NAME.get(log_level)}:`} ` +
+    `${obj_list_to_str(obj_list)}`;
   if (!skip_ws) {
     ws.send(`# ${msg_str}`);
-
   }
   console.log(msg_str);
   log_ui(msg_str, msg_class);
@@ -157,15 +135,13 @@ const LOG_LEVEL_TO_NAME = new Map([
   [50, 'Critical'],
 ]);
 
-function obj_list_to_str(obj_list)
-{
+function obj_list_to_str(obj_list) {
   return Object.values(obj_list).map((obj) => _name_str(obj));
 }
 
-function _name_str(obj)
-{
+function _name_str(obj) {
   if (typeof obj == 'undefined') {
-    return '<undefined>'
+    return '<undefined>';
   }
   if (typeof obj.name != 'undefined') {
     return `${obj.name}:${_str(obj)}`;
@@ -177,100 +153,84 @@ function _name_str(obj)
 // printed for them. By default, most objects render as the supremely unhelpful '[ Object object ]' when implicitly
 // converted to strings. This function helps, at least for some objects. For some sad reason, JSON.stringify(), which
 // can be customized by overriding toJSON() in the object to be rendered, works better than toString().
-function _str(obj)
-{
+function _str(obj) {
   if (typeof obj == 'string') {
     return obj;
   }
   try {
     return obj.originalEvent.type;
-  }
-  catch (exception) {
-  }
+  } catch (exception) {}
   try {
     return obj.toJSON();
-  }
-  catch (exception) {
-  }
+  } catch (exception) {}
   try {
-    return JSON.stringify(obj)
-  }
-  catch (exception) {
-  }
+    return JSON.stringify(obj);
+  } catch (exception) {}
   try {
     return obj.toString();
-  }
-  catch (exception) {
-  }
-  return '<ERROR>'
+  } catch (exception) {}
+  return '<ERROR>';
 }
 
 // https://stackoverflow.com/a/55603620/442006
-export function hook_console()
-{
+export function hook_console() {
   if (console.everything == null) {
     console.everything = [];
     console.defaultLog = console.log.bind(console);
     console.log = function () {
       console.everything.push({
-        'type': 'log',
-        'datetime': Date().toLocaleString(),
-        'value': Array.from(arguments)
+        type: 'log',
+        datetime: Date().toLocaleString(),
+        value: Array.from(arguments),
       });
       console.defaultLog.apply(console, arguments);
-    }
+    };
     console.defaultError = console.error.bind(console);
     console.error = function () {
       console.everything.push({
-        'type': 'error',
-        'datetime': Date().toLocaleString(),
-        'value': Array.from(arguments)
+        type: 'error',
+        datetime: Date().toLocaleString(),
+        value: Array.from(arguments),
       });
       console.defaultError.apply(console, arguments);
-    }
+    };
     console.defaultWarn = console.warn.bind(console);
     console.warn = function () {
       console.everything.push({
-        'type': 'warn',
-        'datetime': Date().toLocaleString(),
-        'value': Array.from(arguments)
+        type: 'warn',
+        datetime: Date().toLocaleString(),
+        value: Array.from(arguments),
       });
       console.defaultWarn.apply(console, arguments);
-    }
+    };
     console.defaultDebug = console.debug.bind(console);
     console.debug = function () {
       console.everything.push({
-        'type': 'debug',
-        'datetime': Date().toLocaleString(),
-        'value': Array.from(arguments)
+        type: 'debug',
+        datetime: Date().toLocaleString(),
+        value: Array.from(arguments),
       });
       console.defaultDebug.apply(console, arguments);
-    }
+    };
   }
 }
 
 export var assert = console.assert.bind(console);
 export var lg = console.log.bind(console);
 
-const logger = className => {
+const logger = (className) => {
   return new Proxy(new className(), {
     get: function (target, name, receiver) {
       if (!target.hasOwnProperty(name)) {
         if (typeof target[name] === 'function') {
-          console.log(
-              'Calling Method : ',
-              name,
-              '|| on : ',
-              target.constructor.name
-          );
+          console.log('Calling Method : ', name, '|| on : ', target.constructor.name);
         }
         return new Proxy(target[name], this);
       }
       return Reflect.get(target, name, receiver);
-    }
+    },
   });
 };
-
 // Add a log line to the log displayed in the UI.
 //
 // The initial implementation of this method triggered a browser bug in Chrome on Android that it took two days to track
@@ -310,14 +270,12 @@ const logger = className => {
 // max, it does not start destroying lines. Instead, each new line is added by detaching the oldest line from the front
 // of the child list, reattaching it at the back, and modifying it to display the text and color of the new line.
 
-function log_ui(msg_str, msg_class = '')
-{
+function log_ui(msg_str, msg_class = '') {
   let log_el = $('#log');
   let line_el;
   if (log_el.children().length > 30) {
     line_el = log_el.children(':first');
-  }
-  else {
+  } else {
     line_el = $(document.createElement('div'));
   }
   line_el.text(msg_str).removeClass().addClass(msg_class);

@@ -13,14 +13,18 @@ export const SMOOTH_SCROLL_SENSITIVITY = 0.03;
 export const TAP_DURATION_MS = 300;
 export const TAP_RADIUS_PIXELS = 20;
 
+// Lowest allowed spin speed. This causes the pointer to stop instead of slowly floating away. If
+// you find that the pointer stops when you just want it to move slowly, increase this value.
+export const SPIN_SPEED_THRESHOLD = 30;
+
 // Enable Touch area to also pick up left clicks.
 export const TOUCH_LEFT_CLICK = true;
 
-// Period in ms, determines the frequency at which to evaluate user input to determine if it's time
+// Period in milliseconds, determines the frequency at which to evaluate user input to determine if it's time
 // trigger a wheel scroll event.
 export const SCROLL_INTERVAL_MS = 20;
 
-// Period in ms, between each attempt to reconnect a lost WebSocket connection to the desktop.
+// Period in milliseconds, between each attempt to reconnect a lost WebSocket connection to the desktop.
 export const WEB_SOCKET_TIMEOUT_MS = 1000;
 
 // Max number of event messages to send over the network to the desktop machine per second.
@@ -38,4 +42,5 @@ export const LogLevel = {
 
 // Log level
 // export const LOG_LEVEL = LogLevel.DEBUG;
-export const LOG_LEVEL = LogLevel.INFO;
+// export const LOG_LEVEL = LogLevel.INFO;
+export const LOG_LEVEL = LogLevel.ERROR;

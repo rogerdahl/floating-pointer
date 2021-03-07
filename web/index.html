@@ -23,24 +23,23 @@
     // window.test;
   }());
   </script>
-
   <link href='mouse.css' rel='stylesheet' type='text/css'/>
   <title>Remote Mouse</title>
 </head>
 <body>
 <div class='grid' id='full'>
   <!-- row 1 -->
-  <div class='rounded-box' id='left'>
+  <div class='rounded-box touch-indicated' id='left'>
     <div class='func'>Left</div>
     <div class='help'>Tap to click</div>
     <div class='help'>Hold to toggle</div>
   </div>
-  <div class='rounded-box' id='middle'>
+  <div class='rounded-box touch-indicated' id='middle'>
     <div class='func'>Middle</div>
   </div>
-  <div class='rounded-box' id='right'>
+  <div class='rounded-box touch-indicated' id='right'>
     <div class='func'>Right</div>
-  </div>
+    </div>
   <!-- row 2 -->
   <div class='rounded-box' id='move'>
     <div class='func' id='status'>Touch</div>
@@ -54,16 +53,18 @@
     <div class='help scroll-help'>Release then tap to start auto-scroll</div>
   </div>
   <!-- row 3 -->
-  <div class='rounded-box' id='smooth-scroll-toggle'>
+  <div class='rounded-box small-button touch-indicated' id='smooth-scroll-toggle'>
     <div class='func'>Smooth</div>
   </div>
   <!-- row 4 -->
-  <div class='rounded-box' id='full-screen'>
+  <div class='rounded-box small-button touch-indicated' id='full-screen'>
     <div class='func'>Full</div>
   </div>
 </div>
 
 <div id='scroll-tip'></div>
+
+<canvas id='overlay'></canvas>
 
 <script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
 <!--  <script type='text/javascript' src='/Scripts/jquery.min.js'></script>-->
@@ -75,6 +76,7 @@
 <script src='./util.js' type='module'></script>
 <script src='./scroll.js' type='module'></script>
 <script src='./log.js' type='module'></script>
+<script src='./draw.js' type='module'></script>
 <script src='./main.js' type='module'></script>
 
 </body>

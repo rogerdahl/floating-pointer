@@ -1,8 +1,8 @@
 // WebSocket
 
-// This module can handle any number of concurrent outgoing WebSocket connections, tracked by
-// names passed in by when creating the connections. Named connections are not currently in
-// use, but leaving the code in for now.
+// This module can handle any number of concurrent outgoing WebSocket connections, tracked by names
+// passed in by when creating the connections. Named connections are not currently in use, but
+// leaving the code in for now.
 
 'use strict';
 
@@ -26,15 +26,13 @@ import * as log from './log.js';
 //     }
 // }
 
-export function connect(connection_name = '')
-{
+export function connect(connection_name = '') {
   // log.status(`Status: Connecting to ${location.host}...`);
   _get_socket(connection_name);
 }
 
 // Send a mouse emulation command to the desktop machine.
-export function send(...str_list)
-{
+export function send(...str_list) {
   log.cmd_sent(...str_list);
   return send_named('', str_list);
 }
@@ -43,20 +41,17 @@ export function send(...str_list)
 
 const g_socket_map = new Map();
 
-function send_named(connection_name, str_list)
-{
+function send_named(connection_name, str_list) {
   let s = _get_socket(connection_name);
   const msg_str = str_list.join(' ');
   if (s.is_ready()) {
     s.send(msg_str);
-  }
-  else {
+  } else {
     console.error('Socket not ready');
   }
 }
 
-function _get_socket(connection_name)
-{
+function _get_socket(connection_name) {
   if (!g_socket_map.has(connection_name)) {
     const s = create_socket(location.hostname, location.port, connection_name);
     g_socket_map.set(connection_name, s);
@@ -64,8 +59,7 @@ function _get_socket(connection_name)
   return g_socket_map.get(connection_name);
 }
 
-function create_socket(host, port, connection_name)
-{
+function create_socket(host, port, connection_name) {
   let s = new WebSocket(`ws://${host}:${port}/ws`);
   g_socket_map.set(connection_name, s);
   s.wait_then_create = () => {

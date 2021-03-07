@@ -1,21 +1,19 @@
+#[allow(unused_variables)]
 #[allow(dead_code)]
 #[doc(inline)]
-#[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate lazy_static;
-
 use std::{thread, time};
 use std::str;
 use std::sync::{Arc, Mutex, MutexGuard};
 
 use async_std::task;
+use clap::*;
 use clap::{App, Arg};
 use colored::*;
 use enigo::{Enigo, /* Key, KeyboardControllable,*/ MouseButton, MouseControllable};
 use float_extras;
 use float_extras::f64::modf;
 use futures::{future, StreamExt};
+use lazy_static::*;
 use local_ipaddress;
 use public_ip::{BoxToResolver, dns, http, ToResolver};
 use warp::Filter;
@@ -27,8 +25,14 @@ const POINTER_REFRESH_FREQ_HZ: f64 = 120.0;
 async fn main() {
     let matches = App::new("Remote Mouse")
         .arg(Arg::with_name("debug")
-            .short("s")
+            .short("d")
             .long("debug")
+            .help("Debug level logging")
+        )
+        .arg(Arg::with_name("dry-run")
+            .short("n")
+            .long("dry-run")
+            .help("Perform all operations except actually sending mouse events")
         )
         .arg(Arg::with_name("friction")
             .short("f")
@@ -45,6 +49,8 @@ async fn main() {
             .takes_value(true)
         ).get_matches();
 
+    let is_dry_run = matches.is_present("dry-run");
+    let is_debug = matches.is_present("debug");
     let pointer_friction = value_t!(
         matches.value_of("friction"), f64).unwrap_or_else(|e| e.exit());
     let pointer_sensitivity = value_t!(
@@ -66,11 +72,8 @@ async fn main() {
     let web = warp::get()
         .and(warp::fs::dir("./web/"));
 
-    // Prepare Enigo, which handles event injections.
-    // let enigo = Arc::new(Mutex::new(Enigo::new()));
-
-    let pointer_sensitivity = pointer_sensitivity.clone();
     let pointer_friction = pointer_friction.clone();
+    let pointer_sensitivity = pointer_sensitivity.clone();
 
     let (ttx, rrx) = std::sync::mpsc::sync_channel::<(f64, f64)>(0);
 
@@ -79,39 +82,45 @@ async fn main() {
         .and(warp::ws())
         .map(move |ws: warp::ws::Ws| {
             let ttx = ttx.clone();
+            let is_dry_run = is_dry_run.clone();
+            let is_debug = is_debug.clone();
+            // Prepare Enigo, which handles event injections.
+            let enigo = Arc::new(Mutex::new(Enigo::new()));
 
-            ws.on_upgrade(|websocket| {
-                let (_tx, rx) = websocket.split();
-                let enigo = Arc::new(Mutex::new(Enigo::new()));
+            ws.on_upgrade(move |websocket| {
+                let (_ws_tx, ws_rx) = websocket.split();
 
-                rx.for_each(move |line| {
+                ws_rx.for_each(move |result| {
                     let mut enigo = enigo.lock().unwrap();
-                    let line = line.unwrap();
-                    let line_bytes = line.as_bytes();
-                    let line_str = match str::from_utf8(line_bytes) {
+                    let msg = result.unwrap();
+                    let msg_bytes = msg.as_bytes();
+                    let msg_str = match str::from_utf8(msg_bytes) {
                         Ok(v) => v,
                         Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
                     };
-                    let line_vec: Vec<&str> = line_str.split(" ").collect();
-
-                    // For debugging, just print what was received and don't generate any events.
-                    // println!("Received: {}\n", line_str);
-                    // return future::ready(());
+                    let msg_vec: Vec<&str> = msg_str.split(" ").collect();
 
                     // Log messages start with '#'. They're just strings the client wants to
                     // display.
-                    if line_vec[0] == "#" {
-                        let rgb = match line_vec[1] {
+                    if msg_vec[0] == "#" {
+                        let rgb = match msg_vec[1] {
                             "Debug:" => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
                             "Info:" => Color::TrueColor { r: 0x00, g: 0xa0, b: 0x00 },
                             "Warning:" => Color::TrueColor { r: 0xff, g: 0x7c, b: 0x00 },
                             "Error:" => Color::TrueColor { r: 0xb0, g: 0x00, b: 0x00 },
                             _ => Color::TrueColor { r: 0xa0, g: 0xa0, b: 0xa0 },
                         };
-                        println!("{}", &line_str[2..].color(rgb));
+                        println!("{}", &msg_str[2..].color(rgb));
                         return future::ready(());
                     }
-
+                    // For debugging, print the message just as it was received.
+                    if is_debug {
+                        println!("Received: {}", msg_str);
+                    }
+                    // For dry-run, skip sending mouse events.
+                    if is_dry_run {
+                        return future::ready(());
+                    }
                     let mut mb = |action: &str, button: MouseButton| {
                         match action {
                             "click" => enigo.mouse_click(button),
@@ -120,40 +129,40 @@ async fn main() {
                             _ => (),
                         };
                     };
-
-                    match line_vec[0] {
+                    // Send mouse events to the OS.
+                    match msg_vec[0] {
                         "left" => {
-                            mb(line_vec[1], MouseButton::Left);
+                            mb(msg_vec[1], MouseButton::Left);
                         }
                         "middle" => {
-                            mb(line_vec[1], MouseButton::Middle);
+                            mb(msg_vec[1], MouseButton::Middle);
                         }
                         "right" => {
-                            mb(line_vec[1], MouseButton::Right);
+                            mb(msg_vec[1], MouseButton::Right);
                         }
                         "touch" => {
-                            let x = line_vec[1].parse::<f64>().unwrap();
-                            let y = line_vec[2].parse::<f64>().unwrap();
+                            let x = msg_vec[1].parse::<f64>().unwrap();
+                            let y = msg_vec[2].parse::<f64>().unwrap();
                             mouse_move_relative_err(enigo, x, y);
                             ttx.send((0.0, 0.0)).unwrap();
                         }
                         "spin" => {
-                            let x = line_vec[1].parse::<f64>().unwrap();
-                            let y = line_vec[2].parse::<f64>().unwrap();
+                            let x = msg_vec[1].parse::<f64>().unwrap();
+                            let y = msg_vec[2].parse::<f64>().unwrap();
                             ttx.send((x, y)).unwrap();
                         }
                         "scroll" => {
-                            let y = line_vec[1].parse::<f64>().unwrap();
+                            let y = msg_vec[1].parse::<f64>().unwrap();
                             mouse_scroll_y_err(enigo, y);
                         }
                         "sleep" => {
-                            let i = line_vec[1].parse::<u64>().unwrap();
+                            let i = msg_vec[1].parse::<u64>().unwrap();
                             let ms = time::Duration::from_millis(i);
                             thread::sleep(ms);
                         }
                         _ => (),
                     };
-
+                    // Done handling this message.
                     future::ready(())
                 })
             })
@@ -224,8 +233,8 @@ fn track_cumulative_error(acc_err: f64, d: f64) -> (f64, i32) {
 fn mouse_move_relative_err(mut enigo: MutexGuard<Enigo>, x: f64, y: f64) -> () {
     let mut pointer_error = POINTER_ERROR.lock().unwrap();
     let (err_x_, int_x) = track_cumulative_error(pointer_error.x, x);
-    pointer_error.x = err_x_;
     let (err_y_, int_y) = track_cumulative_error(pointer_error.y, y);
+    pointer_error.x = err_x_;
     pointer_error.y = err_y_;
     enigo.mouse_move_relative(int_x, int_y);
 }
