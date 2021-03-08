@@ -12,9 +12,9 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 2. Open the browser on your device and type in the link.
 3. Enjoy!
 
-#### Pointer
+#### Floating Pointer 🙃
 
-- The mouse pointer moves according to a simple model that simulates inertia and friction. It provides quick movement over large areas, and accurate movement within small areas.
+- The mouse pointer floats according to a simple model that simulates inertia and friction. It provides fast movement over large areas, and accurate movement within small areas.
 
   Swipe and _release_ in the `Touch` area to quickly send the mouse pointer flying towards an area. _hold_ to catch the pointer and bring it under direct control, then _drag_ to move it to the desired location.
 
@@ -40,13 +40,13 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 
 - Mouse wheel scrolling moves in small jumps, which is not ideal for those hours of doomscrolling bliss, so this app has a mode that triggers smooth scrolling in the browser.
 
-  This function depends on functionality that is built into Firefox but requires a plugin in Chrome.
+  This function depends on functionality that is built into Firefox. To use this with Chrome, install the SmoothScroll extension, available in the Chrome Web Store.
 
-  To tell if it will work in your browser, try to drag in a web page while holding the middle mouse button (while physically at your desktop). This app just emulates that action.
+  To tell if it will work in your browser, try to drag in a web page while holding the middle mouse button, either using this app or a regular mouse. This app just emulates that action.
 
   To use this function with Firefox, enable both `Use autoscrolling` and `Use smooth scrolling` in the Firefox settings (they're under `Browsing`, near the end of the `General` section). Then tap the `Smooth` button in the lower right in the app UI.
-
-  Using this with Chrome is left as an exercise for the reader.
+  
+  Note: The mouse pointer may appear to flicker when starting to scroll with this method. This is to prevent the browser from interpreting brief scrolling as just the start of a scroll. Most of the time this works, but if it doesn't, you may have to start and stop a new scroll in order to synchronize the browser with your actions.
   
 #### Auto scrolling
 
@@ -64,7 +64,9 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 
 - Touches in the `Touch` and `Scroll` areas only have to start in the areas. They still register if the touch moves into another area.
 
-- Using a drag operation to select text is cumbersome without a real mouse. Fortunately, even if there is no visible caret, there may be an invisible one. So text can be selected as if there is a caret. Chrome supports selecting text by clicking at one end of the selection, then holding shift while clicking at the other end. Firefox additionally supports creating a selection with one click then using Shift + arrow keys to make the selection.
+- Using a drag operation to select text is cumbersome without a real mouse. Fortunately, even if there is no visible caret, there may be an invisible one. So text can be selected as if there is a caret.
+
+  Firefox and Chrome supports selecting text by clicking at one end of the selection, then holding shift while clicking at the other end. Firefox also supports creating a selection with one click then using Shift + arrow keys to make the selection.
 
   Firefox and Chrome both also have caret browsing modes, which can be toggled on and off with F7.
   
@@ -72,47 +74,58 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 
 - Enter full screen mode by tapping the `Full` button. This issues a request for full screen to the browser. The request may be ignored, in which case the button will not cause any change. If full screen mode is activated, a swipe from the top or bottom of the screen will normally exit back to regular mode.
 
-## Configuration
+### Configuration
 
-The friction and sensitivity settings that control mouse pointer movement after releasing the touch are command line arguments. E.g.,:
+#### Friction and inertia
 
-    - cargo run -- --friction 0.01 --sensitivity 0.1
+- The friction and sensitivity settings that control mouse pointer movement after releasing the touch are command line arguments. E.g.,:
 
-To have the mouse pointer stop immediately when the touch is released, set the friction to `1.0.`
+      $ cargo run -- --friction 0.01 --sensitivity 0.1
 
-Sensitivity for the other controls, and related settings can be modified by changing the `const` values in `web/settings.js`.
+  - To have the mouse pointer stop immediately when the touch is released, set the friction to `1.0`.
 
-- Sensitivity settings:
+  - Sensitivity for the other controls, and related settings can be modified by changing the `const` values in `web/settings.js`.
+
+#### Sensitivity
 
 - `TOUCH_MOVE_SENSITIVITY`
 - `WHEEL_SCROLL_SENSITIVITY`
 - `SMOOTH_SCROLL_SENSITIVITY`
 
   - Input values are multiplied with these before they're used. Higher values increase sensitivity (less movement is required on the touchpad).
-  
+
+#### Tap / hold / swipe durations
+
 - `TAP_DURATION_MS`
 - `TAP_RADIUS_PIXELS`
 
-  - Tap / hold / swipe durations:
+  - These provide the time and radius where a touch transitions from a tap to a hold or swipe.
   
-    These provide the time and radius where a touch transitions from a tap to a hold or swipe.
-
-    If the mouse buttons are hard to toggle or otherwise seem finicky, you might need to adjust these.
+  - Try adjusting these if the mouse buttons are hard to toggle or otherwise seem finicky.
 
 
+#### Mouse buttons
+  
 - `TOUCH_LEFT_CLICK`
 
-  - Enable Touch area to also pick up left clicks:
+  - Enable Touch area to also pick up left clicks.
+
+#### Suppression of unintended movements
+
+Suppress mouse pointer movements that occurred while a touch was being released.
+
+    TODO: This setting is not implemented yet.
+    Currently using an ad-hoc suppression method. 
 
 - `RELEASE_DURATION_MS = 1000`
 
-  - Suppress mouse pointer movements that occurred while a touch was being released.
-  
-  This setting determines how far back, in milliseconds, that mouse pointer movements should be suppressed when a touch release is detected. E.g, if this value is 100ms, the pointer is set back to where it was a 100ms earlier.
-  
-  Touch screens often register random small movements while a touch is being released. To prevent this from nudging the pointer off target after moving the pointer and before tapping to click there, we suppress them.
+  - Touch screens often register random small movements while a touch is being released. This setting prevents those from nudging the pointer off the point one is intending to click.
     
-  To enable this, the app saves mouse pointer positions as they occur and keeps them while the window is open. The alternative would be to delay the movements until the period has ended, but it would introduce an (admittedly small) amount of mouse pointer lag.
+    The setting is the number of milliseconds of mouse pointer movement to suppress before a release was detected. 
+    
+    It works by "rewinding" the mouse pointer movements that occurred just before a release was detected. Since we cannot know when a release will occur, this setting is also the amount of time for which a history of mouse pointer movements will be maintained.
+    
+#### Misc
 
 - `SCROLL_INTERVAL_MS`
 
@@ -168,10 +181,16 @@ Reboot to activate.
 
 ## Technologies
 
-- `Rust`, `tokio`, `warp`, `enigo`,
+- `Rust`, `tokio`, `warp`, `enigo`, [`vh-check`](https://github.com/Hiswe/vh-check), and the usual suspects, `ES6`, `CSS`, `jQuery`, and `jQuery UI`.
 
-  [vh-check](https://github.com/Hiswe/vh-check), and the usual suspects, ES6, CSS,
-  jQuery, and jQuery UI.
+## TODO
+
+- Option to protect the service with password or PIN.
+- On-device configuration screen.
+- Separate configurations for multiple users.
+- Option to export options and import them on another machine.
+- Run as service on the host (with automatic start after boot).
+- Native installers for supported platforms.
 
 ## Implementation notes
 
@@ -189,6 +208,16 @@ The delta is essentially a vector, describing both the direction and speed of th
 
 The lack of resolution is that the mouse pointer ends up looking like it's dropping into invisible tracks as it moves, where the tracks correspond to the few angles that can be achieved with very small delta values.
 
-So, in order to provide smooth movement at the speed the user wants, we need to use float values in the deltas. But Enigo takes only integers, and if we just round or truncate the floats before passing them on, we haven't gained anything.
+So, in order to provide smooth movement at the speed set by the user, we need to use float values in the deltas. But Enigo takes only integers, and if we just round or truncate the floats before passing them on, we haven't gained anything.
 
-It turns out that all we need to do is keep track of the errors that we introduce by truncating the floats, and roll them back into the mouse position when they're large enough. Instead of throwing out the fractional parts of truncated values (which will be in the [0.0, 1.0) range), we add them to a running total. The total represents the total error we have introduced by truncating the floats so far. The total error is also the difference between the current actual position of the pointer and the position it would have been in, if sub-pixel positioning was supported. Each time we add another rounding error to the cumulative error value, we check if the value has become 1.0 or larger, which means that it has an integer part that we can now split out and send to Enigo. Sending the value to Enigo adjusts the pointer position, cancelling out the rounding errors. Just as a practicality, we don't send the integer parts of the cumulative errors to Enigo separately. Since we're doing the evaluation in the context of sending another delta to Enigo, we just add the integer parts to the delta on which we're working.
+We resolve this by keeping track of the errors that are introduced by truncating the floats, and rolling them back into the mouse position when they're large enough.
+ 
+ Instead of throwing out the fractional parts of truncated values (which will be in the [0.0, 1.0) range), we add them to a running total, called the cumulative error.
+ 
+ The cumulative error represents the error we have introduced by truncating the floats so far. It is also the difference between the current actual position of the pointer and the position it would have been in, if sub-pixel positioning was supported.
+ 
+ Each time we add another rounding error to the cumulative error, we check if the value has become 1.0 or larger, which means that it has an integer part that we can now split out and send to Enigo.
+ 
+ Finally, sending the value to Enigo adjusts the pointer position, cancelling out the rounding errors.
+ 
+ Since we're evaluating the error in the context of sending another delta to Enigo, we just add the integer parts to the delta on which we're working, instead of sending it separately.

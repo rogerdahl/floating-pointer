@@ -7,7 +7,7 @@
 // Higher values are more sensitive (less movement is required on the touchpad).
 export const TOUCH_MOVE_SENSITIVITY = 2.0;
 export const WHEEL_SCROLL_SENSITIVITY = 0.04;
-export const SMOOTH_SCROLL_SENSITIVITY = 0.03;
+export const SMOOTH_SCROLL_SENSITIVITY = 0.015;
 
 // Tap / hold / swipe durations (time and radius)
 export const TAP_DURATION_MS = 300;
@@ -15,7 +15,7 @@ export const TAP_RADIUS_PIXELS = 20;
 
 // Lowest allowed spin speed. This causes the pointer to stop instead of slowly floating away. If
 // you find that the pointer stops when you just want it to move slowly, increase this value.
-export const SPIN_SPEED_THRESHOLD = 30;
+export const SPIN_SPEED_THRESHOLD = 15;
 
 // Enable Touch area to also pick up left clicks.
 export const TOUCH_LEFT_CLICK = true;
@@ -25,6 +25,7 @@ export const TOUCH_LEFT_CLICK = true;
 export const SCROLL_INTERVAL_MS = 20;
 
 // Period in milliseconds, between each attempt to reconnect a lost WebSocket connection to the desktop.
+// TODO: This is not implemented yet.
 export const WEB_SOCKET_TIMEOUT_MS = 1000;
 
 // Max number of event messages to send over the network to the desktop machine per second.
