@@ -5,9 +5,38 @@
 import * as settings from './settings.js';
 import * as log from './log.js';
 import * as util from './util.js';
+import {assert} from './util.js';
 import * as draw from './draw.js';
 
 // Exported
+
+export function register_passive_handlers() {
+  // Replace the regular jQuery event registration methods with versions that register
+  // passive listeners.
+  // https://github.com/WICG/EventListenerOptions/blob/gh-pages/explainer.md
+  //
+  jQuery.event.special.touchstart = {
+    setup: function (_, ns, handle) {
+      this.addEventListener(util.event_start(), handle, {
+        passive: !ns.includes('noPreventDefault'),
+      });
+    },
+  };
+  jQuery.event.special.touchmove = {
+    setup: function (_, ns, handle) {
+      this.addEventListener(util.event_move(), handle, {
+        passive: !ns.includes('noPreventDefault'),
+      });
+    },
+  };
+  jQuery.event.special.touchend = {
+    setup: function (_, ns, handle) {
+      this.addEventListener(util.event_end(), handle, {
+        passive: !ns.includes('noPreventDefault'),
+      });
+    },
+  };
+}
 
 // Call before registering any other handlers for touch or mouse events.
 export function register_start_handler() {
@@ -15,18 +44,19 @@ export function register_start_handler() {
   // To ensure that this event is triggered before all other touch events, we bind it to the document capture
   // phase. jQuery can only bind events in the bubble phase, where events on document fire last, so we use
   // addEventListener() directly.
-  for (const type_str of ['mousedown', 'touchstart']) {
-    document.addEventListener(
-      type_str,
-      function (ev) {
-        handle_global_start(ev);
-        // ev.stopImmediatePropagation();
-        // return util.stop(ev);
-        return true;
-      },
-      true
-    );
-  }
+  // for (const type_str of ['mousedown', 'touchstart']) {
+  document.addEventListener(
+    util.event_start(),
+    function (ev) {
+      handle_global_start(ev);
+      // ev.stopImmediatePropagation();
+      return util.stop(ev);
+      // return true;
+    },
+    // true
+    {passive: true}
+  );
+  // }
 }
 
 // Call after registering all other handlers for touch or mouse events.
@@ -34,7 +64,7 @@ export function register_end_handler() {
   log.debug('touch.register_end_handler()');
   // We bind this event to the document bubble phase, which should ensure that it is triggered
   // after all other touch events.
-  $(document).on('mouseup touchend', function (ev) {
+  $(document).on(util.event_end(), function (ev) {
     handle_global_end(ev);
     // ev.stopImmediatePropagation();
     // return util.stop(ev);
@@ -126,7 +156,8 @@ export function is_hold(ev, delta_key) {
 // Local
 
 class PosTime {
-  constructor(x, y, ts = Date.now()) {
+  constructor(x, y, ts = performance.now()) {
+    // constructor(x, y, ts = Date.now()) {
     this.x = x;
     this.y = y;
     this.ts = ts;
@@ -152,7 +183,7 @@ let touch_map = new Map();
 
 function handle_global_start(ev) {
   log.debug(ev, `handle_global_start()`);
-  draw.clear();
+  draw.clear_now(draw.get_ctx('runes'));
   touch_map.clear();
   touch_map.set('', get_pos_time(ev));
 }
@@ -196,7 +227,7 @@ function is_currently_touched_element(ev) {
 }
 
 function assert_ev(ev) {
-  log.assert(
+  assert(
     typeof ev.type !== 'undefined',
     `'ev' is missing or wrong object (see call stack)`
   );

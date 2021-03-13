@@ -35,29 +35,29 @@ import * as log from './log.js';
 export function register_event_handlers() {
   log.debug('scroll.register_event_handlers()');
   // $('#smooth-scroll-toggle').on('click', (ev) => {
-  $('#smooth-scroll-toggle').on('mouseup touchend', (ev) => {
+  $('#smooth-scroll-toggle').on(util.event_end(), (ev) => {
     state.smooth_toggle = !state.smooth_toggle;
     $(ev.currentTarget).toggleClass('smooth-highlight', state.smooth_toggle);
     $('#status').toggleClass('smooth-highlight', state.smooth_toggle);
     if (state.smooth_toggle) {
-      log.status('Using browser smooth scrolling');
+      log.scroll_status('Using browser smooth scrolling');
     } else {
-      log.status('Using mouse wheel scrolling');
+      log.scroll_status();
     }
     return util.stop(ev);
   });
 
   scroll_el
-    .on('mousedown touchstart', (ev) => {
+    .on(util.event_start(), (ev) => {
       handle_touch_start(ev);
       return util.stop(ev);
     })
-    .on('mouseup touchend', (ev) => {
+    .on(util.event_end(), (ev) => {
       handle_touch_end(ev);
       return util.stop(ev);
     })
     .on(
-      'mousemove touchmove',
+      util.event_move(),
       util.rate_limiter((ev) => {
         handle_touch_move(ev);
         return util.stop(ev);
@@ -234,7 +234,7 @@ function start_interval_timer(_ev) {
   if (state.interval_handle) {
     return;
   }
-  state.interval_start_ts = Date.now();
+  state.interval_start_ts = performance.now();
   state.interval_handle = setInterval(
     handle_interval_timer,
     settings.SCROLL_INTERVAL_MS
@@ -242,9 +242,12 @@ function start_interval_timer(_ev) {
 }
 
 function handle_interval_timer() {
-  if ((Date.now() - state.interval_start_ts) / 1000 >= 1.0 / Math.abs(state.speed)) {
+  if (
+    (performance.now() - state.interval_start_ts) / 1000 >=
+    1.0 / Math.abs(state.speed)
+  ) {
     ws.send('scroll', Math.sign(state.speed));
-    state.interval_start_ts = Date.now();
+    state.interval_start_ts = performance.now();
   }
 }
 

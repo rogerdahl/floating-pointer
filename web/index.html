@@ -7,8 +7,14 @@
   <meta charset='UTF-8'>
   <meta content='width=device-width, initial-scale=1, shrink-to-fit=no' name='viewport'>
 
+  <!--Cross-Origin-Opener-Policy: same-origin-->
+  <!--Cross-Origin-Embedder-Policy: require-corp-->
+  <meta content='same-origin' http-equiv='Cross-Origin-Opener-Policy'>
+  <meta content='require-corp' http-equiv='Cross-Origin-Embedder-Policy'>
+
   <!--<script src='https://unpkg.com/vh-check/dist/vh-check.min.js'></script>-->
   <script src='./lib/vh-check.min.js'></script>
+
   <script>
   (function () {
     // initialize the test
@@ -29,42 +35,73 @@
 <body>
 <div class='grid' id='full'>
   <!-- row 1 -->
-  <div class='rounded-box touch-indicated' id='left'>
-    <div class='func'>Left</div>
-    <div class='help'>Tap to click</div>
-    <div class='help'>Hold to toggle</div>
-  </div>
-  <div class='rounded-box touch-indicated' id='middle'>
-    <div class='func'>Middle</div>
-  </div>
-  <div class='rounded-box touch-indicated' id='right'>
-    <div class='func'>Right</div>
+  <div class='top-box touch-indicated' id='middle'>
+    <div class='title'>Middle</div>
+    <div class='help-section'>
+      <div class='help'>Tap to click</div>
+      <div class='help'>Hold to toggle</div>
     </div>
-  <!-- row 2 -->
-  <div class='rounded-box' id='move'>
-    <div class='func' id='status'>Touch</div>
-    <!--    <div id='dbg-container'>-->
-    <div id='log'></div>
-    <div class='help'>Tap to left-click</div>
-    <!--    </div>-->
+   </div>
+  <div class='top-box touch-indicated' id='right'>
+    <div class='title-section'>
+      <div class='title'>Right</div>
+    </div>
+    <div class='help-section'>
+    </div>
   </div>
-  <div class='rounded-box' id='scroll'>
-    <div class='func' id='scroll-title'>Scroll</div>
-    <div class='help scroll-help'>Release then tap to start auto-scroll</div>
+  <div class='top-box touch-indicated' id='left'>
+    <div class='title-section'>
+      <div class='title'>Left</div>
+    </div>
+    <div class='help-section'>
+    </div>
+  </div>
+  <!-- row 2 -->
+  <div class='top-box' id='move'>
+    <div class='title-section'>
+      <div class='title' id='connection_status'></div>
+      <div class='title' id='scroll_status'></div>
+    </div>
+    <div class='help-section'>
+      <div class='help' id='log'></div>
+      <div class='help'>Tap to left-click</div>
+    </div>
+  </div>
+  <div class='top-box small-button hatch' id='scroll'>
+    <div class='title-section rotated'>
+      <div class='title'>
+        <span class='back'>Scroll</span>
+      </div>
+    </div>
+    <div class='help-section rotated'>
+      <div class='help'>
+        <span>Release then tap to start auto-scroll</span>
+      </div>
+    </div>
   </div>
   <!-- row 3 -->
-  <div class='rounded-box small-button touch-indicated' id='smooth-scroll-toggle'>
-    <div class='func'>Smooth</div>
+  <div class='top-box small-button touch-indicated' id='full-screen'>
+    <div class='title-section'>
+      <div class='title'>F</div>
+    </div>
+    <div class='help-section'></div>
   </div>
   <!-- row 4 -->
-  <div class='rounded-box small-button touch-indicated' id='full-screen'>
-    <div class='func'>Full</div>
+  <div class='top-box small-button touch-indicated' id='smooth-scroll-toggle'>
+    <div class='title-section'>
+      <div class='title'>S</div>
+    </div>
+    <div class='help-section'></div>
   </div>
+  <!-- row 5 -->
+  <!--<div>-->
+  <!--</div>-->
 </div>
 
 <div id='scroll-tip'></div>
 
-<canvas id='overlay'></canvas>
+<canvas id='runes' class='overlay'></canvas>
+<canvas id='snow' class='overlay'></canvas>
 
 <script src='http://code.jquery.com/jquery-3.2.1.min.js'></script>
 <!--  <script type='text/javascript' src='/Scripts/jquery.min.js'></script>-->

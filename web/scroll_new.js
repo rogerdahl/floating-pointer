@@ -33,21 +33,21 @@ export function register_event_handlers() {
     state.smooth_toggle = !state.smooth_toggle;
     $(ev.currentTarget).toggleClass('highlight', state.smooth_toggle);
     if (state.smooth_toggle) {
-      log.status('Using Alt+Wheel scrolling');
+      log.connection_status('Using Alt+Wheel scrolling');
     }
   });
 
   scroll_el
-    .on('mousedown touchstart', (ev) => {
+    .on(util.event_start(), (ev) => {
       handle_touch_start(ev);
       return util.stop(ev);
     })
-    .on('mouseup touchend', (ev) => {
+    .on(util.event_end(), (ev) => {
       handle_touch_end(ev);
       return util.stop(ev);
     })
     .on(
-      'mousemove touchmove',
+      util.event_move(),
       util.rate_limiter((ev) => {
         handle_touch_move(ev);
         return util.stop(ev);

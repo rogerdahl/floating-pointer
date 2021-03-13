@@ -8,16 +8,20 @@ import * as scroll from './scroll.js';
 import * as touch from './touch.js';
 import * as ws from './ws.js';
 import * as log from './log.js';
+import * as util from './util.js';
+import * as snow from './snow.js';
 
 $(document).ready((_ev) => {
-  // alert('ready');
-  log.register_global_error_handler();
-  ws.connect();
+  util.register_console_hooks();
+  util.register_global_error_handler();
+  touch.register_passive_handlers();
   touch.register_start_handler();
   buttons.register_event_handlers();
   move.register_event_handlers();
   scroll.register_event_handlers();
   touch.register_end_handler();
+  ws.connect();
+  snow.start();
 
   $('#full-screen').on('click', () => {
     // throw Error('TEST ERROR HANDLER');

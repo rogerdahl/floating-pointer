@@ -1,4 +1,4 @@
-# ACME Remote Mouse
+# Floating Pointer 🙃
 
 <img align="right" width="40%" src="./assets/screenshot.png">
 
@@ -12,13 +12,17 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 2. Open the browser on your device and type in the link.
 3. Enjoy!
 
-#### Floating Pointer 🙃
+#### Mouse Pointer
 
-- The mouse pointer floats according to a simple model that simulates inertia and friction. It provides fast movement over large areas, and accurate movement within small areas.
+- The mouse pointer is controlled by a virtual trackball (think old arcades like Marble Madness and Spindizzy).
+ 
+  Swipe and _release_ in the `Touch` area to spin the trackball, sending the mouse pointer flying to where you need it to be.
+  
+  _Hold_ to stop the pointer and bring it under direct control, then _drag_ to move it to the desired location.
 
-  Swipe and _release_ in the `Touch` area to quickly send the mouse pointer flying towards an area. _hold_ to catch the pointer and bring it under direct control, then _drag_ to move it to the desired location.
+- This system resolves the issue that many virtual mice have, which is that either moving is slow, or positioning is inaccurate.
 
-  Tapping anywhere in the `Touch` area performs a left mouse button click, so moving the pointer is often followed by a _release_ and _tap_ at the location one is already touching. Then, still from the same location, the pointer can be sent towards the next location with a new swipe.
+- Tapping anywhere in the `Touch` area performs a left mouse button click, so moving the pointer is often followed by a _release_ and _tap_ at the location one is already touching. Then, still from the same location, the pointer can be sent towards the next location with a new swipe.
 
 #### Buttons
 
@@ -46,8 +50,12 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 
   To use this function with Firefox, enable both `Use autoscrolling` and `Use smooth scrolling` in the Firefox settings (they're under `Browsing`, near the end of the `General` section). Then tap the `Smooth` button in the lower right in the app UI.
   
-  Note: The mouse pointer may appear to flicker when starting to scroll with this method. This is to prevent the browser from interpreting brief scrolling as just the start of a scroll. Most of the time this works, but if it doesn't, you may have to start and stop a new scroll in order to synchronize the browser with your actions.
+  Notes:
   
+    - The mouse pointer may appear to flicker when starting to scroll with this method. This is to prevent the browser from interpreting brief scrolling as just the start of a scroll. Most of the time this works, but if it doesn't, you may have to start and stop a new scroll in order to synchronize the browser with your actions.
+  
+    - In both Firefox and Chrome, smooth scrolling will not start if the pointer is hovering over a link. That's because this type of scrolling is triggered using the middle mouse button, while middle mouse button click on a link opens links in new tabs.
+
 #### Auto scrolling
 
 - So we can now scroll smoothly through infinite feeds, but in our Quest for the Ultimate Doomscrolling Experience, having to keep a finger on the screen will get old quickly. So this app has mode where the mouse wheel scroll and browser smooth scroll modes (described above) can be toggled on.
@@ -61,6 +69,8 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 - If your computer seems to have a mind of its own and keeps scrolling things around the day after you used this function, your are advised to check to see if you forgot to turn the scrolling off :)
 
 ## Tips
+
+- When stopping the pointer after a spin, make sure you _hold_, not _tap_. A _tap_ will stop the pointer, but will also cause a spurious click at the stopped position.
 
 - Touches in the `Touch` and `Scroll` areas only have to start in the areas. They still register if the touch moves into another area.
 
@@ -134,10 +144,14 @@ Suppress mouse pointer movements that occurred while a touch was being released.
 - `WEB_SOCKET_TIMEOUT_MS`
 
   - Wait, in ms, between each attempt to reconnect a lost WebSocket connection to the desktop.
+
+- `ENABLE_MYSTERY_RUNES`
+
+  - Enable drawing symbols to indicate user input and triggered actions.
   
 ## Host security considerations
 
-Anyone that can connect to the WebSocket that remote-mouse opens on the desktop PC can control the mouse. It's remotely conceivable that this could be used in an attack where the attacker guesses what's on the monitor (to determine where to click), or can see the monitor through a window, or just clicks randomly to break things. If this is of concern, access to the port should be restricted, for instance with firewall rules, or by setting remote-mouse to listen only on a localhost port, and accessing it via an SSH tunnel.
+Anyone that can connect to the WebSocket that Remote Mouse opens on the desktop PC can control the mouse. It's remotely conceivable that this could be used in an attack where the attacker guesses what's on the monitor (to determine where to click), or can see the monitor through a window, or just clicks randomly to break things. If this is of concern, access to the port should be restricted, for instance with firewall rules, or by setting remote-mouse to listen only on a localhost port, and accessing it via an SSH tunnel.
 
 ## Installation
 
@@ -181,7 +195,16 @@ Reboot to activate.
 
 ## Technologies
 
-- `Rust`, `tokio`, `warp`, `enigo`, [`vh-check`](https://github.com/Hiswe/vh-check), and the usual suspects, `ES6`, `CSS`, `jQuery`, and `jQuery UI`.
+- `Rust`,
+  `tokio`,
+  `warp`,
+  `enigo`,
+  [`vh-check`](https://github.com/Hiswe/vh-check),
+  [`CSS Stripes Generator`](https://stripesgenerator.com/) and the usual suspects,
+  `ES6`,
+  `CSS`,
+  `jQuery`, and 
+  `jQuery UI`.
 
 ## TODO
 
@@ -192,7 +215,38 @@ Reboot to activate.
 - Run as service on the host (with automatic start after boot).
 - Native installers for supported platforms.
 
+## Related projects
+
+Free and commercial, misc platforms. 
+
+- rkvm - https://github.com/htrefil/rkvm • https://www.reddit.com/r/rust/comments/jlhga1/rkvm_a_tool_to_share_keyboard_and_mouse_over_the/
+- Simple Computer Remote - http://www.rpiblog.com/2013/11/using-android-as-wireless-mouse-keyboard.html
+- Barrier - https://www.raspberrypi.org/blog/share-your-keyboard-and-mouse-between-computers-with-barrier/
+- Remote Mouse - https://www.remotemouse.net/ • https://www.exploit-db.com/exploits/46697
+- Unified Remote - https://www.unifiedremote.com/ 
+- Mobile Mouse - https://mobilemouse.com/
+- WifiMouse - https://wifimouse.github.io • https://www.thewindowsclub.com/wifimouse-phone-wireless-mouse-for-windows
+- Aexol Remote Mouse - https://formulae.brew.sh/cask/aexol-remote-mouse
+- Simple Computer Remote - https://philproctor.github.io/SimpleComputerRemote/
+- CouchLover - https://github.com/dotKokott/CouchLover
+- cAndroid / Control via Android - https://github.com/hummatli/cAndroid
+
+- Gorm Remote Mouse - https://play.google.com/store/apps/details?id=uk.co.lcstudios.mouseemulator&hl=en_US&gl=US
+- Lazy Mouse - https://play.google.com/store/apps/details?id=com.ahmedaay.lazymousepro&hl=en_US&gl=US
+
 ## Implementation notes
+
+#### Spin heuristics
+
+- When the user starts a spin, it's essential that we set the pointer speed and direction as accurately as possible. I found that we need to select the fraction of a second of user input that occurred just before the touch was released, and we need to discard any earlier user input that may have been part of the same swipe, but was just the user moving the mouse before deciding to start the spin. 
+
+  To find the point at which the user started the spin, we start at the end of the swipe, and move backwards in the history of user input while applying two heuristics:
+  
+  1) We expect the swipe that starts a spin to speed up until relase. So we check for the speed of movement along the history. As long as the speed doesn't slow down (with some toleranse), when seen related to moving forwards in time, we keep searching. If it starts slowing down, we stop the search and set that point as the start of useful input.
+  
+  2) We expect the swipe to be a fairly straight line, indicating the direction the user wants. So we keep searching as long as line segments between positions in the history form a fairly straight line. We break off when two segments join with too much of an angle.
+
+  The heuristics are applied at the same time, and whichever stops the search first is the deciding one. 
 
 #### Rounding errors
 

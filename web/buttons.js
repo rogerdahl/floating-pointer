@@ -7,6 +7,7 @@ import * as ws from './ws.js';
 import * as touch from './touch.js';
 import * as log from './log.js';
 import * as util from './util.js';
+import * as draw from './draw.js';
 
 // Exported
 
@@ -14,17 +15,17 @@ export function register_event_handlers() {
   log.debug('buttons.register_event_handlers()');
 
   $('#left,#middle,#right') // $('#left,#middle,#right')
-    .on('mousedown touchstart', (ev) => {
+    .on(util.event_start(), (ev) => {
       handle_touch_start(ev, ev.currentTarget.id);
       return util.stop(ev);
     })
-    .on('mouseup touchend', (ev) => {
+    .on(util.event_end(), (ev) => {
       if (g_state) {
         handle_touch_end(ev);
       }
       return util.stop(ev);
     })
-    .on('mousemove touchmove', (ev) => {
+    .on(util.event_move(), (ev) => {
       handle_touch_move(ev);
       return util.stop(ev);
     });
@@ -32,10 +33,27 @@ export function register_event_handlers() {
   // Left-click with tap in the Move area.
   if (settings.TOUCH_LEFT_CLICK) {
     $('#move') // .on('mouseup touchend touchcancel', (ev) => {
-      .on('touchend', (ev) => {
+      .on(util.event_end(), (ev) => {
         if (touch.is_tap(ev)) {
+          let abs_pos = touch.get_pos_time(ev);
           handle_touch_start(ev, 'left');
           handle_touch_end(ev);
+          let ctx = draw.get_ctx('runes');
+          draw.clear_later(ctx);
+          // let timer = new util.Timer('Star');
+          draw.star(ctx, abs_pos.x, abs_pos.y, 20, '#815b0a', 2, 0, Math.PI / 4);
+          draw.star(
+            ctx,
+            abs_pos.x,
+            abs_pos.y,
+            15,
+            '#feae09',
+            2,
+            Math.PI / 8,
+            Math.PI / 4
+          );
+          // timer.info();
+          // draw.star(abs_pos.x, abs_pos.y, 20);
           return util.stop(ev);
         }
       });

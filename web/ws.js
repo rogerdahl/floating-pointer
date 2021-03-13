@@ -27,14 +27,18 @@ import * as log from './log.js';
 // }
 
 export function connect(connection_name = '') {
-  // log.status(`Status: Connecting to ${location.host}...`);
+  log.connection_status(`Connecting to ${location.host}...`);
   _get_socket(connection_name);
 }
 
 // Send a mouse emulation command to the desktop machine.
 export function send(...str_list) {
-  log.cmd_sent(...str_list);
   return send_named('', str_list);
+  if (obj_list[0][0] === '#') {
+    return;
+  }
+
+  log.cmd_sent(...str_list);
 }
 
 // Local
@@ -75,17 +79,17 @@ function create_socket(host, port, connection_name) {
     return s.readyState === 1;
   };
   s.onopen = () => {
-    log.status(`Status: Connected to ${location.host}`);
+    log.connection_status(`Connected to ${location.host}`);
   };
   s.onmessage = (ev) => {
-    log.status(`Status: Message from host: ${ev.data}`);
+    log.connection_status(`Message from host: ${ev.data}`);
   };
   s.onclose = () => {
-    log.status(`Status: Attempting to reconnect to ${host}...`);
+    log.connection_status(`Attempting to reconnect to ${host}...`);
     s.wait_then_create();
   };
   s.onerror = (ev) => {
-    log.status(`Status: WebSocket error: ${ev.message}`);
+    log.connection_status(`WebSocket error: ${ev.message}`);
     s.wait_then_create();
   };
   return s;
