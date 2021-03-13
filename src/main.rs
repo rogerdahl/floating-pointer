@@ -237,7 +237,7 @@ async fn main() {
         .or(ws)
         .with(warp::reply::with::headers(headers));
 
-    println!("Starting remote-mouse service.");
+    println!("Starting floating-pointer service.");
     println!("Now browse to this machine from a phone or tablet.");
     println!("Local URL: http://{}:7780", local_ipaddress::get().unwrap());
     println!(

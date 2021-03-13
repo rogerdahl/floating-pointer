@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Send mouse input to the remote-mouse WebSocket interface.
+"""Send mouse input to the floating-pointer WebSocket interface.
 """
 
 import asyncio

@@ -1,13 +1,13 @@
 [package]
-name = "remote-mouse"
+name = "floating-pointer"
 version = "0.1.0"
 authors = ["Roger Dahl <git@dahlsys.com>"]
 edition = "2018"
 license = "MIT"
 description = "Use your phone or tablet as a mouse on Linux, Windows or Mac"
 readme = "README.md"
-homepage =   "https://github.com/rogerdahl/remote-mouse"
-repository = "https://github.com/rogerdahl/remote-mouse"
+homepage =   "https://github.com/rogerdahl/floating-pointer"
+repository = "https://github.com/rogerdahl/floating-pointer"
 keywords = ["cli", "remote", "mouse", "emulator"]
 categories = ["emulators", "hardware-support"]
 

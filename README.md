@@ -8,7 +8,7 @@ Runs directly in the browser, so there's no app to install on your device. Free 
 
 ## Usage
 
-1. Start `remote-mouse` on your desktop machine, and note the local link it displays.
+1. Start `floating-pointer` on your desktop machine, and note the local link it displays.
 2. Open the browser on your device and type in the link.
 3. Enjoy!
 
@@ -151,7 +151,7 @@ Suppress mouse pointer movements that occurred while a touch was being released.
   
 ## Host security considerations
 
-Anyone that can connect to the WebSocket that Remote Mouse opens on the desktop PC can control the mouse. It's remotely conceivable that this could be used in an attack where the attacker guesses what's on the monitor (to determine where to click), or can see the monitor through a window, or just clicks randomly to break things. If this is of concern, access to the port should be restricted, for instance with firewall rules, or by setting remote-mouse to listen only on a localhost port, and accessing it via an SSH tunnel.
+Anyone that can connect to the WebSocket that Remote Mouse opens on the desktop PC can control the mouse. It's remotely conceivable that this could be used in an attack where the attacker guesses what's on the monitor (to determine where to click), or can see the monitor through a window, or just clicks randomly to break things. If this is of concern, access to the port should be restricted, for instance with firewall rules, or by setting floating-pointer to listen only on a localhost port, and accessing it via an SSH tunnel.
 
 ## Installation
 
@@ -168,8 +168,8 @@ Then:
 ```shell
 $ sudo apt install libxdo-dev
 $ bash -c '
-git clone https://github.com/rogerdahl/remote-mouse
-cd remote-mouse
+git clone https://github.com/rogerdahl/floating-pointer
+cd floating-pointer
 cargo run --release
 '
 ```
