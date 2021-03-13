@@ -21,7 +21,7 @@ $(document).ready((_ev) => {
   scroll.register_event_handlers();
   touch.register_end_handler();
   ws.connect();
-  snow.start();
+  // snow.start();
 
   $('#full-screen').on('click', () => {
     // throw Error('TEST ERROR HANDLER');
